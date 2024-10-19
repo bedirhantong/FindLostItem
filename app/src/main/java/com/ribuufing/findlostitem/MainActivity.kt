@@ -27,16 +27,10 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        enableEdgeToEdge(
-//            statusBarStyle = SystemBarStyle.light(
-//                Color.TRANSPARENT,
-//                Color.TRANSPARENT
-//            )
-//        )
         setContent {
             FindLostItemTheme {
                 val navController: NavHostController = rememberNavController()
-                var buttonsVisible by remember { mutableStateOf(true) }
+                var buttonsVisible by remember { mutableStateOf(false) }
                 Scaffold(
                     bottomBar = {
                         if (buttonsVisible) {
@@ -59,5 +53,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-//LostItemsScreen()

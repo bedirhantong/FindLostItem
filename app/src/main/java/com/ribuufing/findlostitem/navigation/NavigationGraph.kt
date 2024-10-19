@@ -9,7 +9,7 @@ import com.ribuufing.findlostitem.presentation.screens.onboarding.WelcomeScreen
 
 @Composable
 fun NavigationGraph(navController: NavHostController, onBottomBarVisibility: (Boolean) -> Unit) {
-    NavHost(navController, startDestination = BottomNavigationItems.Home.route) {
+    NavHost(navController, startDestination = Routes.Welcome.route) {
         composable(Routes.Welcome.route) {
             onBottomBarVisibility(false)
             WelcomeScreen(navController = navController)
