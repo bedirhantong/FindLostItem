@@ -25,6 +25,7 @@ fun BottomBar(
     val screens = listOf(
         BottomNavigationItems.Home,
         BottomNavigationItems.AddItem,
+        BottomNavigationItems.MapItem,
         BottomNavigationItems.Profile
     )
 
@@ -55,11 +56,7 @@ fun BottomBar(
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    unselectedTextColor = Color.Gray,
-                    selectedTextColor = Color.Black,
-                    selectedIconColor = Color.Black,
-                    unselectedIconColor = Color.Black,
-                    indicatorColor = Color.Gray
+
                 ),
             )
         }

@@ -14,10 +14,14 @@ sealed class BottomNavigationItems(
     )
 
     object AddItem : BottomNavigationItems(
-        "add_item", "Add Item", R.drawable.add_light, R.drawable.add
+        "add_item", "Post", R.drawable.add_light, R.drawable.add
+    )
+
+    object MapItem : BottomNavigationItems(
+        "map_item", "Map", R.drawable.map_logo, R.drawable.map_logo
     )
 
     object Profile : BottomNavigationItems(
-        "profile", "Profile", R.drawable.profile_light, R.drawable.profile_dark
+        "settings", "Settings", R.drawable.profile_light, R.drawable.profile_dark
     )
 }

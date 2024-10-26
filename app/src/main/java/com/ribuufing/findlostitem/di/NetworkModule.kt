@@ -1,5 +1,6 @@
 package com.ribuufing.findlostitem.di
 
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ribuufing.findlostitem.data.datasources.FirestoreDataSource
 import dagger.Module
@@ -23,4 +24,12 @@ object NetworkModule {
     fun provideFirestoreDataSource(firestore: FirebaseFirestore): FirestoreDataSource {
         return FirestoreDataSource(firestore)
     }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth {
+        return FirebaseAuth.getInstance()
+    }
+
+
 }
