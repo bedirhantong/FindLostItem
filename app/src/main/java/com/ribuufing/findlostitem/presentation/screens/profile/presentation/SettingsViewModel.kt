@@ -2,7 +2,6 @@ package com.ribuufing.findlostitem.presentation.screens.profile.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ribuufing.findlostitem.presentation.screens.profile.domain.usecase.DeleteAccountUseCase
 import com.ribuufing.findlostitem.presentation.screens.profile.domain.usecase.LogoutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

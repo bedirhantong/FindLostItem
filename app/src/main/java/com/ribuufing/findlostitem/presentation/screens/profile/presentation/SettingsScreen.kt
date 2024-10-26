@@ -2,6 +2,7 @@ package com.ribuufing.findlostitem.presentation.screens.profile.presentation
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -9,6 +10,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.ribuufing.findlostitem.navigation.BottomNavigationItems
 import com.ribuufing.findlostitem.navigation.Routes
 import com.ribuufing.findlostitem.utils.Result
 
@@ -34,7 +37,7 @@ fun SettingsScreen(
         // Log Out Button
         Button(
             onClick = {
-//                viewModel.logout()
+                viewModel.logout()
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -47,7 +50,12 @@ fun SettingsScreen(
         when (logoutState) {
             is Result.Success -> {
                 Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
-                navController.navigate(Routes.Login.route)
+                navController.navigate(Routes.Login.route) {
+                    // Back stack'ı temizlemek için ayarları yapılandır
+                    popUpTo(BottomNavigationItems.Profile.route) {
+                        inclusive = true
+                    }
+                }
             }
 
             is Result.Failure -> {

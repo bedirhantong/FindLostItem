@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.graphics.Color
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,36 +24,27 @@ import com.ribuufing.findlostitem.navigation.BottomBar
 import com.ribuufing.findlostitem.navigation.NavigationGraph
 import com.ribuufing.findlostitem.ui.theme.FindLostItemTheme
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setupSystemBars()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(
+                scrim = Color.TRANSPARENT,
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                scrim = Color.TRANSPARENT,
+                darkScrim = Color.TRANSPARENT
+            )
+        )
         setContent {
             FindLostItemTheme {
                 MainContent()
             }
         }
-    }
-
-    private fun setupSystemBars() {
-        // System bar'ları içerikten ayırmak için
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        // Status bar ve navigation bar'ı şeffaf yap
-        window.statusBarColor = Color.TRANSPARENT
-        window.navigationBarColor = Color.TRANSPARENT
-
-        // Status bar ve navigation bar görünürlüğü için ışık teması (light mode) ayarı
-        val insetsController = WindowInsetsControllerCompat(window, window.decorView)
-        insetsController.isAppearanceLightStatusBars = true // Light mode için status bar
-        insetsController.isAppearanceLightNavigationBars = true // Light mode için navigation bar
     }
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")

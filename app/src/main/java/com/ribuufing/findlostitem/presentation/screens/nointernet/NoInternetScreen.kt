@@ -1,6 +1,8 @@
 package com.ribuufing.findlostitem.presentation.screens.nointernet
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -21,11 +23,25 @@ import com.ribuufing.findlostitem.R
 fun NoInternetScreen(openDialog: MutableState<Boolean>, onRetry: () -> Unit) {
     if (openDialog.value) {
         Dialog(onDismissRequest = { openDialog.value = false }) {
-            Surface(modifier = Modifier.fillMaxSize()) {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.background,
+                tonalElevation = 8.dp,
+                modifier = Modifier
+                    .wrapContentSize()
+                    .border(
+                        border = BorderStroke(
+                            width = 0.5.dp,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        ),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+
+            ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
+                        .fillMaxWidth()
+                        .padding(26.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -49,6 +65,7 @@ private fun NoInternetImage() {
         modifier = Modifier
             .height(200.dp)
             .fillMaxWidth()
+            .padding(16.dp) // Görüntüye daha fazla boşluk
     )
 }
 
@@ -56,22 +73,26 @@ private fun NoInternetImage() {
 private fun NoInternetText() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = "Whoops!!",
+            text = "Whoops!",
             fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.primary,
-            letterSpacing = 2.sp,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontSize = 28.sp,
+                color = MaterialTheme.colorScheme.onBackground
+            ),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "No Internet connection was found. Check your connection or try again.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.primary,
-            letterSpacing = 1.sp,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
+            text = "No Internet connection found.\nPlease check your connection or try again.",
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f) // Hafif daha koyu
+            ),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
         )
     }
 }
@@ -81,8 +102,15 @@ private fun RetryButton(onRetry: () -> Unit) {
     Button(
         onClick = onRetry,
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
     ) {
-        Text("Try Again", fontSize = 20.sp, modifier = Modifier.padding(vertical = 8.dp))
+        Text("Try Again", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
     }
 }
+

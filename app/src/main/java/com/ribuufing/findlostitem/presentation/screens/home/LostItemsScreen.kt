@@ -52,10 +52,13 @@ import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ribuufing.findlostitem.R
 import com.ribuufing.findlostitem.navigation.Routes
+import com.ribuufing.findlostitem.presentation.screens.nointernet.NoInternetScreen
+import com.ribuufing.findlostitem.presentation.screens.nointernet.NoInternetViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LostItemsScreen(
+    noInternetViewModel: NoInternetViewModel = hiltViewModel(),
     viewModel: LostItemsViewModel = hiltViewModel(),
     navController: NavHostController
 ) {
@@ -63,6 +66,8 @@ fun LostItemsScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
+    val isInternetAvailable by noInternetViewModel.isInternetAvailable // İnternet durumunu gözlemle
+    val openDialog = remember { mutableStateOf(false) }
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
@@ -71,14 +76,32 @@ fun LostItemsScreen(
             isRefreshing = false
         }
     }
+    LaunchedEffect(Unit) {
+        noInternetViewModel.checkInternetConnection() // Bağlantı kontrolünü başlat
+    }
+
+    if (!isInternetAvailable) {
+        openDialog.value = true
+    } else {
+        openDialog.value = false
+    }
+
+    NoInternetScreen(openDialog = openDialog, onRetry = {
+        noInternetViewModel.checkInternetConnection() // Bağlantıyı tekrar kontrol et
+    })
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
+                modifier = Modifier.fillMaxWidth().imePadding(),
                 title = {
                     Text(
                         text = "Lost Items",
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 },
                 actions = {
@@ -124,7 +147,7 @@ fun LostItemsScreen(
                                 ShimmerEffect(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(100.dp)
+                                        .wrapContentSize()
                                 )
                             }
                         }
@@ -146,7 +169,7 @@ fun LostItemsScreen(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(it)
-                                    .offset(y = offsetY)  // Move content down as user swipes
+                                    .offset(y = offsetY)
                             ) {
                                 items(lostItems) { item ->
                                     LostItemRow(item, viewModel)
@@ -219,7 +242,7 @@ fun ShimmerEffect(
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp)
+                .height(40.dp)
                 .background(brush)
         )
 
@@ -229,7 +252,7 @@ fun ShimmerEffect(
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(40.dp)
+                .height(30.dp)
                 .background(brush)
         )
 
@@ -238,7 +261,7 @@ fun ShimmerEffect(
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp)
+                .height(250.dp)
                 .background(brush)
         )
 
@@ -274,7 +297,6 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
             text = item.title,
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(bottom = 8.dp),
-            color = Color(0xFF1C140D)
         )
 
         // Location and Date Row
@@ -287,7 +309,8 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
                     Icon(
                         painter = painterResource(id = R.drawable.from_icon),
                         contentDescription = "Placed Location icon",
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
+                        tint = Color(0xFF58B437)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
@@ -308,7 +331,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
                         painter = painterResource(id = R.drawable.placed_icon),
                         contentDescription = "Placed Location icon",
                         modifier = Modifier.size(16.dp),
-                        tint = Color(0xFF6E2425)
+                        tint = Color(0xFFD72224)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(

@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -28,9 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.Firebase
 import com.google.firebase.storage.storage
+import com.ribuufing.findlostitem.navigation.BottomNavigationItems
+import com.ribuufing.findlostitem.navigation.Routes
 import com.ribuufing.findlostitem.presentation.screens.auth.presentation.AuthViewModel
 import com.ribuufing.findlostitem.utils.Result
 
@@ -74,7 +78,11 @@ fun LoginScreen(
         when (userState) {
             is Result.Success -> {
                 Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
-                navController.navigate("home") // Başarılı giriş sonrası ana ekrana yönlendiriyoruz
+                navController.navigate(BottomNavigationItems.Home.route) {
+                    popUpTo(Routes.Login.route) {
+                        inclusive = true
+                    }
+                }
             }
             is Result.Failure -> {
                 val errorMessage = (userState as? Result.Failure)?.exception?.localizedMessage
@@ -181,8 +189,7 @@ fun LoginScreen(
             // Login Button
             Button(
                 onClick = {
-//                    authViewModel.loginUser(email, password)
-                    navController.navigate("home")
+                    authViewModel.loginUser(email, password)
                 },
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFED822B)),
                 modifier = Modifier

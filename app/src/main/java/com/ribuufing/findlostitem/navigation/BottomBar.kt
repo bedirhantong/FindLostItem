@@ -31,7 +31,6 @@ fun BottomBar(
 
     NavigationBar(
         modifier = modifier,
-        containerColor = Color.White,
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -56,7 +55,7 @@ fun BottomBar(
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-
+                    indicatorColor = Color(0xFFED822B),
                 ),
             )
         }
