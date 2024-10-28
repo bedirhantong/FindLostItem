@@ -1,4 +1,4 @@
-package com.ribuufing.findlostitem.presentation.screens.reportfounditem
+package com.ribuufing.findlostitem.presentation.screens.reportfounditem.presentation
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -23,9 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,7 +50,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.LineHeightStyle
 import com.ribuufing.findlostitem.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,8 +78,12 @@ fun ReportFoundItemScreen() {
                             title = itemName,
                             description = message,
                             images = images,
+                            date = "2021-10-10",
+                            contact = "123456789",
+//                            foundByUser = firebaseAuth.currentUser,
                             foundWhere = foundWhere,
-                            placedWhere = placedWhere
+                            placedWhere = placedWhere,
+
                         )
                         // onSubmit(lostItem)
                     }) {
@@ -202,7 +203,6 @@ fun ReportFoundItemScreen() {
                         .fillMaxWidth()
                         .wrapContentSize()
                 ) {
-                    // İlk olarak "Add Image" butonunu gösteriyoruz
                     item {
                         Box(
                             modifier = Modifier
@@ -223,7 +223,6 @@ fun ReportFoundItemScreen() {
                         }
                     }
 
-                    // Sonra seçilen fotoğrafları gösteriyoruz
                     items(selectImages) { uri ->
                         Box(modifier = Modifier.padding(8.dp)) {
                             Image(

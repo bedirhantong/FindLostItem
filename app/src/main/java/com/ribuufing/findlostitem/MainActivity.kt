@@ -20,8 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.ribuufing.findlostitem.navigation.BottomBar
+import com.ribuufing.findlostitem.navigation.BottomNavigationItems
 import com.ribuufing.findlostitem.navigation.NavigationGraph
+import com.ribuufing.findlostitem.navigation.Routes
 import com.ribuufing.findlostitem.ui.theme.FindLostItemTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -40,16 +44,24 @@ class MainActivity : ComponentActivity() {
                 darkScrim = Color.TRANSPARENT
             )
         )
+
+        // Kullanıcı oturum durumunu kontrol et
+        val startDestination = if (Firebase.auth.currentUser != null) {
+            BottomNavigationItems.Home.route
+        } else {
+            Routes.Welcome.route
+        }
+
         setContent {
             FindLostItemTheme {
-                MainContent()
+                MainContent(startDestination)
             }
         }
     }
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @Composable
-    private fun MainContent() {
+    private fun MainContent(startDestination: String) {
         val navController: NavHostController = rememberNavController()
         var buttonsVisible by remember { mutableStateOf(false) }
 
@@ -65,7 +77,10 @@ class MainActivity : ComponentActivity() {
                     .fillMaxSize()
                     .padding(bottom = if (buttonsVisible) 76.dp else 0.dp)
             ) {
-                NavigationGraph(navController = navController) { isVisible ->
+                NavigationGraph(
+                    navController = navController,
+                    startDestination = startDestination
+                ) { isVisible ->
                     buttonsVisible = isVisible
                 }
             }

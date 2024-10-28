@@ -1,4 +1,4 @@
-package com.ribuufing.findlostitem.presentation.screens.profile.presentation
+package com.ribuufing.findlostitem.presentation.screens.profile.presentation.settings
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -10,7 +10,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.ribuufing.findlostitem.navigation.BottomNavigationItems
 import com.ribuufing.findlostitem.navigation.Routes
 import com.ribuufing.findlostitem.utils.Result

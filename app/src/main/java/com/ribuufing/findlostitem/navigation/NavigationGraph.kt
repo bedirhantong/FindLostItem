@@ -14,12 +14,17 @@ import androidx.compose.animation.core.tween
 import androidx.navigation.NavBackStackEntry
 import com.ribuufing.findlostitem.presentation.screens.auth.presentation.login.LoginScreen
 import com.ribuufing.findlostitem.presentation.screens.auth.presentation.signup.RegisterScreen
-import com.ribuufing.findlostitem.presentation.screens.profile.presentation.SettingsScreen
-import com.ribuufing.findlostitem.presentation.screens.reportfounditem.ReportFoundItemScreen
+import com.ribuufing.findlostitem.presentation.screens.profile.presentation.ProfileScreen
+import com.ribuufing.findlostitem.presentation.screens.profile.presentation.settings.SettingsScreen
+import com.ribuufing.findlostitem.presentation.screens.reportfounditem.presentation.ReportFoundItemScreen
 
 @Composable
-fun NavigationGraph(navController: NavHostController, onBottomBarVisibility: (Boolean) -> Unit) {
-    NavHost(navController, startDestination = Routes.Welcome.route) {
+fun NavigationGraph(
+    navController: NavHostController,
+    startDestination: String,
+    onBottomBarVisibility: (Boolean) -> Unit
+) {
+    NavHost(navController, startDestination = startDestination) {
         composable(Routes.Welcome.route) {
             onBottomBarVisibility(false)
             WelcomeScreen(navController = navController)
@@ -38,20 +43,38 @@ fun NavigationGraph(navController: NavHostController, onBottomBarVisibility: (Bo
         }
         composable(BottomNavigationItems.Profile.route) {
             onBottomBarVisibility(true)
-            SettingsScreen(navController = navController)
+            ProfileScreen(navController = navController)
         }
-        composable(Routes.Chat.route, enterTransition = ::slideInToRight,
-            exitTransition = ::slideOutToRight) {
+        composable(
+            Routes.Chat.route, enterTransition = ::slideInToRight,
+            exitTransition = ::slideOutToRight
+        ) {
             onBottomBarVisibility(false)
             ChatScreen(navController)
         }
-        composable(Routes.Signup.route, enterTransition = ::slideInToLeft, exitTransition = ::slideOutToLeft) {
+        composable(
+            Routes.Signup.route,
+            enterTransition = ::slideInToLeft,
+            exitTransition = ::slideOutToLeft
+        ) {
             onBottomBarVisibility(false)
             RegisterScreen(navController = navController)
         }
-        composable(Routes.Login.route, enterTransition = ::slideInToLeft, exitTransition = ::slideOutToLeft) {
+        composable(
+            Routes.Login.route,
+            enterTransition = ::slideInToLeft,
+            exitTransition = ::slideOutToLeft
+        ) {
             onBottomBarVisibility(false)
             LoginScreen(navController = navController)
+        }
+        composable(
+            Routes.Settings.route,
+            enterTransition = ::slideInToLeft,
+            exitTransition = ::slideOutToLeft
+        ) {
+            onBottomBarVisibility(false)
+            SettingsScreen(navController = navController)
         }
     }
 }

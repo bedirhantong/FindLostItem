@@ -5,7 +5,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import com.ribuufing.findlostitem.utils.Result
 
-// LogoutUseCase.kt
 class LogoutUseCase @Inject constructor(
     private val userRepository: UserRepository
 ) {

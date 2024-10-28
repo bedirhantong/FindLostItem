@@ -1,4 +1,4 @@
-package com.ribuufing.findlostitem.presentation.screens.profile.presentation
+package com.ribuufing.findlostitem.presentation.screens.profile.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

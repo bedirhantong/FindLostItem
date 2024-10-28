@@ -22,6 +22,6 @@ sealed class BottomNavigationItems(
     )
 
     object Profile : BottomNavigationItems(
-        "settings", "Settings", R.drawable.profile_light, R.drawable.profile_dark
+        "profile", "Profile", R.drawable.profile_light, R.drawable.profile_dark
     )
 }
