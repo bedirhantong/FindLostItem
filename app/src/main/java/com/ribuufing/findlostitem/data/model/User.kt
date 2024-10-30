@@ -10,5 +10,6 @@ data class User(
     val password: String = "",
     val imageUrl: String = "",
     val phone: String = "",
-    val foundedItems: List<LostItem> = emptyList()
+    val foundedItems: List<LostItem> = emptyList(),
+    val chats : List<Chat> = emptyList()
 )

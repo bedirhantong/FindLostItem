@@ -45,6 +45,14 @@ class LostItemsViewModel @Inject constructor(
         }
     }
 
+    fun refreshLostItems() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _lostItems.value = getLostItemsUseCase.invoke()
+            _isLoading.value = false
+        }
+    }
+
     private fun addDummyData() {
         viewModelScope.launch {
             getLostItemsUseCase.addDummyData()
