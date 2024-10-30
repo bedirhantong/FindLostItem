@@ -119,7 +119,6 @@ fun LoginScreen(
                 }
             }
 
-            // Mesaj
             Text(
                 text = "You will never try to find alone.",
                 fontSize = 16.sp,
@@ -127,7 +126,6 @@ fun LoginScreen(
                 modifier = Modifier.padding(16.dp)
             )
 
-            // Email Input
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -147,7 +145,6 @@ fun LoginScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
-            // Password Input
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -176,7 +173,6 @@ fun LoginScreen(
                 }
             )
 
-            // Forgot Password
             Text(
                 text = "Forgot password?",
                 color = Color(0xFF99704D),
