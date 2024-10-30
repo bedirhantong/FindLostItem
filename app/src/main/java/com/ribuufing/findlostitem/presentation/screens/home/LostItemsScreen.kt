@@ -1,6 +1,5 @@
 package com.ribuufing.findlostitem.presentation.screens.home
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -14,17 +13,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,85 +35,146 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
+import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ribuufing.findlostitem.R
+import com.ribuufing.findlostitem.navigation.Routes
+import com.ribuufing.findlostitem.presentation.screens.nointernet.NoInternetScreen
+import com.ribuufing.findlostitem.presentation.screens.nointernet.NoInternetViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LostItemsScreen(viewModel: LostItemsViewModel = hiltViewModel()) {
+fun LostItemsScreen(
+    noInternetViewModel: NoInternetViewModel = hiltViewModel(),
+    viewModel: LostItemsViewModel = hiltViewModel(),
+    navController: NavHostController
+) {
     val lostItems by viewModel.lostItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    var isRefreshing by remember { mutableStateOf(false) }
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
+    val isInternetAvailable by noInternetViewModel.isInternetAvailable // İnternet durumunu gözlemle
+    val openDialog = remember { mutableStateOf(false) }
 
-    // 3 saniyelik shimmer gösterimi
-    LaunchedEffect(Unit) {
-        // internet kontrolü yapılabilir
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            // Trigger refresh logic
+            viewModel.refreshLostItems()
+            isRefreshing = false
+        }
     }
+    LaunchedEffect(Unit) {
+        noInternetViewModel.checkInternetConnection() // Bağlantı kontrolünü başlat
+    }
+
+    if (!isInternetAvailable) {
+        openDialog.value = true
+    } else {
+        openDialog.value = false
+    }
+
+    NoInternetScreen(openDialog = openDialog, onRetry = {
+        noInternetViewModel.checkInternetConnection() // Bağlantıyı tekrar kontrol et
+    })
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
+                modifier = Modifier.fillMaxWidth().imePadding(),
                 title = {
                     Text(
                         text = "Lost Items",
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 },
                 actions = {
-                    IconButton(onClick = { /* DM button action here */ }) {
+                    IconButton(onClick = {
+                        navController.navigate(Routes.Chat.route)
+                    }) {
                         Icon(
-                            painter = painterResource(id = R.drawable.dm), // Replace with your drawable name
+                            painter = painterResource(id = R.drawable.dm),
                             contentDescription = "Direct Message",
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
+                            tint = Color(0xFFED822B)
                         )
                     }
                 }
             )
         },
         content = {
-            if (isLoading) {
-                // İstek devam ederken shimmer effect göster
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    items(5) {
-                        ShimmerEffect(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp)
-                        )
-                    }
+            // Apply offset to content to simulate it moving down with swipe gesture
+            SwipeRefresh(
+                state = swipeRefreshState,
+                onRefresh = { isRefreshing = true },
+                indicator = { state, trigger ->
+                    SwipeRefreshIndicator(
+                        state = state,
+                        refreshTriggerDistance = trigger,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        backgroundColor = MaterialTheme.colorScheme.background,
+                        elevation = 8.dp,
+                    )
                 }
-            } else {
-                if (lostItems.isEmpty()) {
-                    // Veri boşsa ekrana mesaj göster
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "Gönderiler bulunamadı",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    }
-                } else {
-                    // Veriler varsa listeyi göster
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(it)
-                    ) {
-                        items(lostItems) { item ->
-                            LostItemRow(item, viewModel)
+            ) {
+                val offsetY = min(swipeRefreshState.indicatorOffset.dp, 80.dp) // Cap the movement
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (isLoading) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(it)
+                                .offset(y = offsetY)  // Move content down as user swipes
+                        ) {
+                            items(5) {
+                                ShimmerEffect(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .wrapContentSize()
+                                )
+                            }
+                        }
+                    } else {
+                        if (lostItems.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .offset(y = offsetY),  // Move content down as user swipes
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "Gönderiler bulunamadı",
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(it)
+                                    .offset(y = offsetY)
+                            ) {
+                                items(lostItems) { item ->
+                                    LostItemRow(item, viewModel)
+                                }
+                            }
                         }
                     }
                 }
@@ -186,7 +242,7 @@ fun ShimmerEffect(
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp)
+                .height(40.dp)
                 .background(brush)
         )
 
@@ -196,7 +252,7 @@ fun ShimmerEffect(
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(40.dp)
+                .height(30.dp)
                 .background(brush)
         )
 
@@ -205,7 +261,7 @@ fun ShimmerEffect(
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp)
+                .height(250.dp)
                 .background(brush)
         )
 
@@ -220,7 +276,6 @@ fun ShimmerEffect(
     }
 }
 
-
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
@@ -231,18 +286,17 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(10.dp)
-            // Set the border for the post
             .border(
                 border = BorderStroke(0.1.dp, Color.Gray),
                 shape = MaterialTheme.shapes.small
             )
-            .padding(16.dp) // Padding inside the border
+            .padding(16.dp)
     ) {
         // Item Name
         Text(
             text = item.title,
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         )
 
         // Location and Date Row
@@ -251,46 +305,47 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                // Found Where
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Place,
-                        contentDescription = "Found Location icon",
-                        modifier = Modifier.size(16.dp)
+                        painter = painterResource(id = R.drawable.from_icon),
+                        contentDescription = "Placed Location icon",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color(0xFF58B437)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = item.foundWhere, // Found location text
-                        style = MaterialTheme.typography.bodySmall
+                        text = item.foundWhere,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF99704D)
                     )
                 }
 
-                // Three Dot Icon
                 Icon(
-                    imageVector = Icons.Default.MoreVert, // Three dot vertical icon
+                    imageVector = Icons.Default.MoreVert,
                     contentDescription = "More icon",
                     modifier = Modifier.size(16.dp)
                 )
 
-                // Placed Where
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Star,
+                        painter = painterResource(id = R.drawable.placed_icon),
                         contentDescription = "Placed Location icon",
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
+                        tint = Color(0xFFD72224)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = item.placedWhere, // Placed location text
-                        style = MaterialTheme.typography.bodySmall
+                        text = item.placedWhere,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF99704D)
                     )
                 }
             }
 
-            // Date
             Text(
                 text = item.date,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF99704D)
             )
         }
 
@@ -299,7 +354,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
         // Description
         Text(
             text = item.description,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
@@ -312,24 +367,48 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
                     state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp) // Set a fixed height for the image display
+                        .height(350.dp)
                 ) { page ->
-                    val painter: Painter = rememberAsyncImagePainter(model = item.images[page])
-                    Image(
-                        painter = painter,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit // Adjust content scale as needed
-                    )
+                    val painter = rememberAsyncImagePainter(model = item.images[page])
+                    val painterState = painter.state
+
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Image(
+                            painter = painter,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
+                        )
+
+                        // Placeholder or Loading indicator
+                        if (painterState is AsyncImagePainter.State.Loading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .size(32.dp)
+                            )
+                        }
+
+                        // Error indicator
+                        if (painterState is AsyncImagePainter.State.Error) {
+                            Text(
+                                text = "Failed to load image.",
+                                color = Color.Red,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                    }
                 }
 
-                // Indicator at the bottom
                 Row(
                     horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(vertical = 8.dp).fillMaxWidth()
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .fillMaxWidth()
                 ) {
                     repeat(item.images.size) { index ->
-                        val color = if (index == pagerState.currentPage) Color.Black else Color.Gray
+                        val color =
+                            if (index == pagerState.currentPage) Color.Black else Color.LightGray
                         Box(
                             modifier = Modifier
                                 .size(8.dp)
@@ -338,7 +417,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
                                 .padding(2.dp)
                         )
                         if (index < item.images.size - 1) {
-                            Spacer(modifier = Modifier.width(4.dp)) // Space between indicators
+                            Spacer(modifier = Modifier.width(4.dp))
                         }
                     }
                 }
@@ -367,7 +446,6 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
 
             IconButton(
                 onClick = {
-                    // Downvote action
                     viewModel.downVoteItem(item.id.toString(), downvoteCount)
                     downvoteCount--
                 },
@@ -382,8 +460,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
             Text(text = downvoteCount.toString(), modifier = Modifier.wrapContentWidth())
             IconButton(
                 onClick = {
-                    // Share the item with whatsapp, email, etc.
-
+                    // Share the item
                 },
                 modifier = Modifier.wrapContentWidth()
             ) {

@@ -25,12 +25,12 @@ fun BottomBar(
     val screens = listOf(
         BottomNavigationItems.Home,
         BottomNavigationItems.AddItem,
+        BottomNavigationItems.MapItem,
         BottomNavigationItems.Profile
     )
 
     NavigationBar(
         modifier = modifier,
-        containerColor = Color.White,
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -55,11 +55,7 @@ fun BottomBar(
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    unselectedTextColor = Color.Gray,
-                    selectedTextColor = Color.Black,
-                    selectedIconColor = Color.Black,
-                    unselectedIconColor = Color.Black,
-                    indicatorColor = Color.Gray
+                    indicatorColor = Color(0xFFED822B),
                 ),
             )
         }
