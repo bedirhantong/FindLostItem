@@ -1,7 +1,5 @@
 package com.ribuufing.findlostitem.presentation.screens.chat
 
-import android.annotation.SuppressLint
-import android.view.WindowInsets
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,15 +20,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -58,6 +52,7 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import com.ribuufing.findlostitem.R
+import com.ribuufing.findlostitem.data.model.LostItem
 import com.ribuufing.findlostitem.data.model.Message
 import com.ribuufing.findlostitem.data.model.User
 import kotlinx.coroutines.launch
@@ -66,20 +61,23 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatScreen(
     navController: NavHostController,
+    itemId: String,
     chatViewModel: ChatViewModel = hiltViewModel()
 ) {
-    val messages by chatViewModel.messages.collectAsState() // StateFlow’u takip ediyoruz
+    val messages by chatViewModel.messages.collectAsState()
     val coroutineScope = rememberCoroutineScope()
-    val listState = rememberLazyListState() // LazyColumn'un scroll pozisyonu için
+    val listState = rememberLazyListState()
     val scrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior() // Do not use remember here
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val lostItem by chatViewModel.lostItem.collectAsState()
 
     LaunchedEffect(Unit) {
-        chatViewModel.addDummyData() // Dummy veri ekliyoruz
+        chatViewModel.addDummyData()
+        chatViewModel.getLostItemById(itemId)
     }
 
     Scaffold(
-        topBar = { ChatAppBar(navController, scrollBehavior) },
+        topBar = { ChatAppBar(navController, scrollBehavior,lostItem) },
         content = { innerPadding ->
             LazyColumn(
                 state = listState,
@@ -127,17 +125,17 @@ fun ChatScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatAppBar(navController: NavHostController, scrollBehavior: TopAppBarScrollBehavior) {
+fun ChatAppBar(navController: NavHostController, scrollBehavior: TopAppBarScrollBehavior, item : LostItem) {
     TopAppBar(
         title = {
             Column {
                 Text(
-                    text = "Macbook Air",
+                    text = item.title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
                 Text(
-                    text = "Last seen: 1/15 at 2pm, 5th floor of library",
+                    text = item.foundWhere,
                     fontSize = 12.sp,
                     color = Color.Gray
                 )

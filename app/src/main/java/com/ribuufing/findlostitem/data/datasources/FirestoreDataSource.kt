@@ -21,6 +21,14 @@ class FirestoreDataSource(private val firestore: FirebaseFirestore) {
             .await()
     }
 
+    suspend fun getLostItemById(itemId: String): LostItem {
+        return firestore.collection("lost_items")
+            .document(itemId)
+            .get()
+            .await()
+            .toObject(LostItem::class.java)!!
+    }
+
     // Birden fazla alanı aynı anda güncelleyen fonksiyon
     suspend fun updateMultipleFields(itemId: String, updates: Map<String, Any>) {
         firestore.collection("lost_items")

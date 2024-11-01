@@ -7,4 +7,5 @@ interface LostItemRepository {
     suspend fun addDummyData()
     suspend fun upvoteLostItem(itemId: String, currentUpvotes: Int)
     suspend fun downvoteLostItem(itemId: String, currentDownvotes: Int)
+    suspend fun getLostItemById(itemId: String): LostItem
 }

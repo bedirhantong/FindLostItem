@@ -16,15 +16,17 @@ class LostItemRepositoryImpl @Inject constructor(
         dataSource.addDummyData()
     }
 
-    // Upvote sayısını artırmak için repository fonksiyonu
     override suspend fun upvoteLostItem(itemId: String, currentUpvotes: Int) {
         val newUpvotes = currentUpvotes + 1
         dataSource.updateLostItemField(itemId, "numOfUpVotes", newUpvotes)
     }
 
-    // Downvote sayısını artırmak için repository fonksiyonu
     override suspend fun downvoteLostItem(itemId: String, currentDownvotes: Int) {
         val newDownvotes = currentDownvotes + 1
         dataSource.updateLostItemField(itemId, "numOfDownVotes", newDownvotes)
+    }
+
+    override suspend fun getLostItemById(itemId: String): LostItem {
+        return dataSource.getLostItemById(itemId)
     }
 }
