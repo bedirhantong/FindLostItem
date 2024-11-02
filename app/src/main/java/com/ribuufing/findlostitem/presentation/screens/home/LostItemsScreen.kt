@@ -317,7 +317,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel,navController: Nav
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = item.foundWhere,
+                        text = item.foundWhere.toString(),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF99704D)
                     )
@@ -338,7 +338,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel,navController: Nav
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = item.placedWhere,
+                        text = item.placedWhere.toString(),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF99704D)
                     )

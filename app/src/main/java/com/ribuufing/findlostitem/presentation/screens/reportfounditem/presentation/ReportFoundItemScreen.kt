@@ -74,17 +74,17 @@ fun ReportFoundItemScreen() {
                 title = { Text("Details of found item") },
                 actions = {
                     IconButton(onClick = {
-                        val lostItem = LostItem(
-                            title = itemName,
-                            description = message,
-                            images = images,
-                            date = "2021-10-10",
-                            contact = "123456789",
-//                            foundByUser = firebaseAuth.currentUser,
-                            foundWhere = foundWhere,
-                            placedWhere = placedWhere,
-
-                        )
+//                        val lostItem = LostItem(
+//                            title = itemName,
+//                            description = message,
+//                            images = images,
+//                            date = "2021-10-10",
+//                            contact = "123456789",
+////                            foundByUser = firebaseAuth.currentUser,
+//                            foundWhere = foundWhere,
+//                            placedWhere = placedWhere,
+//
+//                        )
                         // onSubmit(lostItem)
                     }) {
                         Icon(Icons.Default.Send, contentDescription = "Send")
