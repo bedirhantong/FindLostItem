@@ -32,4 +32,8 @@ class LostItemRepositoryImpl @Inject constructor(
     override suspend fun getLostItemsInArea(location: Location, radius: Double): List<LostItem> = withContext(Dispatchers.IO) {
         dataSource.getLostItemsInArea(location, radius)
     }
+
+    override suspend fun getLostItemById(itemId: String): LostItem {
+        return dataSource.getLostItemById(itemId)
+    }
 }

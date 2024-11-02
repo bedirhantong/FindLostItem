@@ -12,8 +12,11 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.ribuufing.findlostitem.presentation.screens.auth.presentation.login.LoginScreen
 import com.ribuufing.findlostitem.presentation.screens.auth.presentation.signup.RegisterScreen
+import com.ribuufing.findlostitem.presentation.screens.lostitemdetail.LostItemDetailScreen
 import com.ribuufing.findlostitem.presentation.screens.mapscreen.MapScreen
 import com.ribuufing.findlostitem.presentation.screens.profile.presentation.ProfileScreen
 import com.ribuufing.findlostitem.presentation.screens.profile.presentation.settings.SettingsScreen
@@ -48,10 +51,12 @@ fun NavigationGraph(
         }
         composable(
             Routes.Chat.route, enterTransition = ::slideInToRight,
-            exitTransition = ::slideOutToRight
-        ) {
+            exitTransition = ::slideOutToRight,
+            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
             onBottomBarVisibility(false)
-            ChatScreen(navController)
+            ChatScreen(navController, itemId)
         }
         composable(
             Routes.Signup.route,
@@ -76,6 +81,15 @@ fun NavigationGraph(
         ) {
             onBottomBarVisibility(false)
             SettingsScreen(navController = navController)
+        }
+
+        composable(
+            route = Routes.ItemDetail.route,
+            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
+            onBottomBarVisibility(false)
+            LostItemDetailScreen(navController,itemId)
         }
     }
 }

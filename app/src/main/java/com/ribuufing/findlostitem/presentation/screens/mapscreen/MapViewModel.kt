@@ -33,7 +33,7 @@ class MapViewModel @Inject constructor(
     val isBottomSheetExpanded: StateFlow<Boolean> = _isBottomSheetExpanded
     init {
         fetchLostItems()
-        addDummyData()
+//        addDummyData()
     }
 
     private fun addDummyData() {

@@ -26,6 +26,14 @@ class FirestoreDataSource(private val firestore: FirebaseFirestore) {
             .await()
     }
 
+    suspend fun getLostItemById(itemId: String): LostItem {
+        return firestore.collection("lost_items")
+            .document(itemId)
+            .get()
+            .await()
+            .toObject(LostItem::class.java)!!
+    }
+
     // Birden fazla alanı aynı anda güncelleyen fonksiyon
     suspend fun updateMultipleFields(itemId: String, updates: Map<String, Any>) {
         firestore.collection("lost_items")
@@ -674,7 +682,229 @@ suspend fun addDummyData() {
             "placedWhere" to Location(36.5275, 30.4747),
             "numOfUpVotes" to 5,
             "numOfDownVotes" to 0
-        )
+        ),
+        hashMapOf(
+            "id" to 121,
+            "title" to "Woman Bag",
+            "description" to "Woman bag with a floral pattern",
+            "images" to listOf(
+                "https://i0.shbdn.com/photos/13/83/34/x5_1174138334681.jpg",
+                "https://cdn.dsmcdn.com/mnresize/400/-/ty1291/product/media/images/prod/SPM/PIM/20240503/10/49ab5b61-88ec-3b4b-a475-25d294a01079/1_org.jpg"
+            ),
+            "location" to "Antalya Kaleiçi Marina",
+            "date" to "2024-11-02",
+            "contact" to "+1122334411",
+            "foundByUser" to hashMapOf("id" to 3, "name" to "Michael Brown"),
+            "isFound" to false,
+            "isReturned" to false,
+            "foundWhere" to Location(36.8840, 30.7056),
+            "placedWhere" to Location(36.8840, 30.7056),
+            "numOfUpVotes" to 3,
+            "numOfDownVotes" to 1
+        ),
+        hashMapOf(
+            "id" to 122,
+            "title" to "Phone Case",
+            "description" to "Xiaomi Case for Xiaomi 13 Pro, Midnight",
+            "images" to listOf(
+                "https://i0.shbdn.com/photos/54/39/43/x5_1185543943wl1.jpg",
+                "https://i0.shbdn.com/photos/26/61/14/x5_12002661144b0.jpg"
+            ),
+            "location" to "Antalya Aquarium",
+            "date" to "2024-11-03",
+            "contact" to "+1122334422",
+            "foundByUser" to hashMapOf("id" to 1, "name" to "John Doe"),
+            "isFound" to true,
+            "isReturned" to true,
+            "foundWhere" to Location(36.8589, 30.6375),
+            "placedWhere" to Location(36.8589, 30.6375),
+            "numOfUpVotes" to 6,
+            "numOfDownVotes" to 0
+        ),
+        hashMapOf(
+            "id" to 123,
+            "title" to "Wedding Ring",
+            "description" to "Platinum wedding ring with diamonds",
+            "images" to listOf(
+                "https://i0.shbdn.com/photos/36/24/13/x5_11453624136ps.jpg",
+            ),
+            "location" to "Antalya Museum",
+            "date" to "2024-11-04",
+            "contact" to "+1122334433",
+            "foundByUser" to hashMapOf("id" to 2, "name" to "Jane Smith"),
+            "isFound" to false,
+            "isReturned" to false,
+            "foundWhere" to Location(36.8864, 30.6819),
+            "placedWhere" to Location(36.8864, 30.6819),
+            "numOfUpVotes" to 5,
+            "numOfDownVotes" to 1
+        ),
+        hashMapOf(
+            "id" to 124,
+            "title" to "Mouse",
+            "description" to "Logitech MX Master 3 Wireless Mouse",
+            "images" to listOf(
+                "https://i0.shbdn.com/photos/90/73/80/x5_11499073800k7.jpg",
+            ),
+            "location" to "Antalya Clock Tower",
+            "date" to "2024-11-05",
+            "contact" to "+1122334444",
+            "foundByUser" to hashMapOf("id" to 3, "name" to "Michael Brown"),
+            "isFound" to true,
+            "isReturned" to false,
+            "foundWhere" to Location(36.8869, 30.7042),
+            "placedWhere" to Location(36.8869, 30.7042),
+            "numOfUpVotes" to 2,
+            "numOfDownVotes" to 0
+        ),
+        hashMapOf(
+            "id" to 125,
+            "title" to "Bluetooth Speaker",
+            "description" to "JBL Charge 5 Portable Bluetooth Speaker",
+            "images" to listOf(
+                "https://i0.shbdn.com/photos/10/64/86/x5_1146106486zbz.jpg",
+                "https://i0.shbdn.com/photos/90/34/89/x5_1146903489oan.jpg"
+            ),
+            "location" to "Antalya State Hospital",
+            "date" to "2024-11-06",
+            "contact" to "+1122334455",
+            "foundByUser" to hashMapOf("id" to 1, "name" to "John Doe"),
+            "isFound" to false,
+            "isReturned" to false,
+            "foundWhere" to Location(36.8919, 30.6814),
+            "placedWhere" to Location(36.8919, 30.6814),
+            "numOfUpVotes" to 8,
+            "numOfDownVotes" to 1
+        ),
+        hashMapOf(
+            "id" to 126,
+            "title" to "100$ Cash",
+            "description" to "100 US dollars in a blue envelope",
+            "images" to listOf(
+                "https://i0.shbdn.com/photos/74/44/96/x5_1125744496cvw.jpg",
+            ),
+            "location" to "Antalya Grand Bazaar",
+            "date" to "2024-11-07",
+            "contact" to "+1122334466",
+            "foundByUser" to hashMapOf("id" to 2, "name" to "Jane Smith"),
+            "isFound" to true,
+            "isReturned" to false,
+            "foundWhere" to Location(36.8836, 30.7056),
+            "placedWhere" to Location(36.8836, 30.7056),
+            "numOfUpVotes" to 4,
+            "numOfDownVotes" to 0
+        ),
+        hashMapOf(
+            "id" to 127,
+            "title" to "GS Shirt",
+            "description" to "Galatasaray SK football shirt, size M",
+            "images" to listOf(
+                "https://i0.shbdn.com/photos/54/11/62/x5_1129541162fst.jpg",
+            ),
+            "location" to "Antalya Kaleiçi Marina",
+            "date" to "2024-11-08",
+            "contact" to "+1122334477",
+            "foundByUser" to hashMapOf("id" to 3, "name" to "Michael Brown"),
+            "isFound" to false,
+            "isReturned" to false,
+            "foundWhere" to Location(36.8839, 30.7064),
+            "placedWhere" to Location(36.8839, 30.7064),
+            "numOfUpVotes" to 5,
+            "numOfDownVotes" to 1
+        ),
+        hashMapOf(
+            "id" to 128,
+            "title" to "BJK Shirt",
+            "description" to "Beşiktaş JK football shirt, size L",
+            "images" to listOf(
+                "https://i0.shbdn.com/photos/97/15/52/1161971552box.jpg",
+            ),
+            "location" to "Antalya Museum",
+            "date" to "2024-11-09",
+            "contact" to "+1122334488",
+            "foundByUser" to hashMapOf("id" to 1, "name" to "John Doe"),
+            "isFound" to true,
+            "isReturned" to true,
+            "foundWhere" to Location(36.8864, 30.6819),
+            "placedWhere" to Location(36.8864, 30.6819),
+            "numOfUpVotes" to 6,
+            "numOfDownVotes" to 0
+        ),
+        hashMapOf(
+            "id" to 129,
+            "title" to "Fenerbahçe Shirt",
+            "description" to "Fenerbahçe SK football shirt, size XL",
+            "images" to listOf(
+                "https://i0.shbdn.com/photos/49/12/91/x5_1135491291lcr.jpg",
+            ),
+            "location" to "Antalya Clock Tower",
+            "date" to "2024-11-10",
+            "contact" to "+1122334499",
+            "foundByUser" to hashMapOf("id" to 2, "name" to "Jane Smith"),
+            "isFound" to false,
+            "isReturned" to false,
+            "foundWhere" to Location(36.8869, 30.7042),
+            "placedWhere" to Location(36.8869, 30.7042),
+            "numOfUpVotes" to 8,
+            "numOfDownVotes" to 1
+        ),
+        hashMapOf(
+            "id" to 130,
+            "title" to "Credit Card",
+            "description" to "Visa credit card in a black wallet",
+            "images" to listOf(
+                "https://uludaggazete.com/wp-content/uploads/2022/10/maxresdefault-1-1024x576.jpg",
+                "https://i.ytimg.com/vi/qTvbQ7YkGjk/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBmWYuL12lAquSCY9oUhhxUBIr0cg"
+            ),
+            "location" to "Antalya State Hospital",
+            "date" to "2024-11-11",
+            "contact" to "+1122334400",
+            "foundByUser" to hashMapOf("id" to 3, "name" to "Michael Brown"),
+            "isFound" to true,
+            "isReturned" to false,
+            "foundWhere" to Location(36.8919, 30.6814),
+            "placedWhere" to Location(36.8919, 30.6814),
+            "numOfUpVotes" to 4,
+            "numOfDownVotes" to 0
+        ),
+        hashMapOf(
+            "id" to 131,
+            "title" to "University Idendity Card",
+            "description" to "University of Antalya student ID card",
+            "images" to listOf(
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8psTtDBwSe_fkkHWPWeyx6KdXasml_t4nUw&s",
+                "https://pbs.twimg.com/media/FBvgA1UWQAQKwY6.jpg:large"
+            ),
+            "location" to "Antalya Grand Bazaar",
+            "date" to "2024-11-12",
+            "contact" to "+1122334411",
+            "foundByUser" to hashMapOf("id" to 1, "name" to "John Doe"),
+            "isFound" to false,
+            "isReturned" to false,
+            "foundWhere" to Location(36.8837, 30.7067),
+            "placedWhere" to Location(36.8837, 30.7067),
+            "numOfUpVotes" to 2,
+            "numOfDownVotes" to 0
+        ),
+        hashMapOf(
+            "id" to 132,
+            "title" to "Bank Card",
+            "description" to "Ziraat Bank debit card",
+            "images" to listOf(
+                "https://www.ziraatbank.com.tr/PublishingImages/Subpage/bireysel/kartlar/card-front.png",
+            ),
+            "location" to "Antalya Aquarium",
+            "date" to "2024-11-13",
+            "contact" to "+1122334422",
+            "foundByUser" to hashMapOf("id" to 2, "name" to "Jane Smith"),
+            "isFound" to true,
+            "isReturned" to false,
+            "foundWhere" to Location(36.8589, 30.6375),
+            "placedWhere" to Location(36.8589, 30.6375),
+            "numOfUpVotes" to 5,
+            "numOfDownVotes" to 1
+        ),
+
     )
 
     // Batch işlemi ile dummy datayı firestore'a ekleme

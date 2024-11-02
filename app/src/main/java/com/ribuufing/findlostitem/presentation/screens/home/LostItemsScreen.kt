@@ -11,6 +11,7 @@ import com.ribuufing.findlostitem.data.model.LostItem
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -51,7 +52,6 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ribuufing.findlostitem.R
-import com.ribuufing.findlostitem.navigation.Routes
 import com.ribuufing.findlostitem.presentation.screens.nointernet.NoInternetScreen
 import com.ribuufing.findlostitem.presentation.screens.nointernet.NoInternetViewModel
 
@@ -66,7 +66,7 @@ fun LostItemsScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
-    val isInternetAvailable by noInternetViewModel.isInternetAvailable // İnternet durumunu gözlemle
+    val isInternetAvailable by noInternetViewModel.isInternetAvailable
     val openDialog = remember { mutableStateOf(false) }
 
     LaunchedEffect(isRefreshing) {
@@ -77,7 +77,7 @@ fun LostItemsScreen(
         }
     }
     LaunchedEffect(Unit) {
-        noInternetViewModel.checkInternetConnection() // Bağlantı kontrolünü başlat
+        noInternetViewModel.checkInternetConnection()
     }
 
     if (!isInternetAvailable) {
@@ -87,7 +87,7 @@ fun LostItemsScreen(
     }
 
     NoInternetScreen(openDialog = openDialog, onRetry = {
-        noInternetViewModel.checkInternetConnection() // Bağlantıyı tekrar kontrol et
+        noInternetViewModel.checkInternetConnection()
     })
 
     Scaffold(
@@ -106,7 +106,7 @@ fun LostItemsScreen(
                 },
                 actions = {
                     IconButton(onClick = {
-                        navController.navigate(Routes.Chat.route)
+                        // Open Direct Messages screen
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.dm),
@@ -172,7 +172,7 @@ fun LostItemsScreen(
                                     .offset(y = offsetY)
                             ) {
                                 items(lostItems) { item ->
-                                    LostItemRow(item, viewModel)
+                                    LostItemRow(item, viewModel,navController)
                                 }
                             }
                         }
@@ -278,13 +278,16 @@ fun ShimmerEffect(
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel) {
+fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel,navController: NavHostController) {
     var upvoteCount by remember { mutableIntStateOf(item.numOfUpVotes) }
     var downvoteCount by remember { mutableIntStateOf(item.numOfDownVotes) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable {
+                navController.navigate("item_detail/${item.id}")
+            }
             .padding(10.dp)
             .border(
                 border = BorderStroke(0.1.dp, Color.Gray),
