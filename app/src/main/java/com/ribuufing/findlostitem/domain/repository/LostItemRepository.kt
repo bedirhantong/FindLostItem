@@ -1,5 +1,6 @@
 package com.ribuufing.findlostitem.domain.repository
 
+import com.ribuufing.findlostitem.data.model.Location
 import com.ribuufing.findlostitem.data.model.LostItem
 
 interface LostItemRepository {
@@ -7,4 +8,5 @@ interface LostItemRepository {
     suspend fun addDummyData()
     suspend fun upvoteLostItem(itemId: String, currentUpvotes: Int)
     suspend fun downvoteLostItem(itemId: String, currentDownvotes: Int)
+    suspend fun getLostItemsInArea(location: Location, radius: Double): List<LostItem>
 }

@@ -13,8 +13,8 @@ data class LostItem(
     val foundByUser: User? = null,
     val isFound: Boolean = false,
     val isReturned: Boolean = false,
-    val foundWhere: String = "",
-    val placedWhere: String = "",
+    val foundWhere: Location = Location(0.0, 0.0),
+    val placedWhere: Location = Location(0.0, 0.0),
     val numOfUpVotes: Int = 0,
     val numOfDownVotes: Int = 0
 )

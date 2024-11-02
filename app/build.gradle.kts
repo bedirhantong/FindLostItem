@@ -117,4 +117,13 @@ dependencies {
     implementation (libs.accompanist.pager.indicators)
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.swiperefresh)
+    implementation (libs.accompanist.permissions)
+
+    // Google Play Services Maps SDK
+    implementation (libs.play.services.maps)
+
+    // Maps Compose Library (optional if you are using Compose with Maps)
+    implementation (libs.maps.compose)
+
+
 }

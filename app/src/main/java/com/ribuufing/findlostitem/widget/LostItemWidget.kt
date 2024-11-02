@@ -63,12 +63,12 @@ class LostItemWidget : GlanceAppWidget() {
                 )
                 // Found and placed locations
                 Text(
-                    text = "Found at: ${it.foundWhere.ifEmpty { "Unknown location" }}",
+                    text = "Found at: ${it.foundWhere}",
                     style = TextStyle(fontSize = 14.sp),
                     modifier = GlanceModifier.padding(bottom = 4.dp)
                 )
                 Text(
-                    text = "Placed at: ${it.placedWhere.ifEmpty { "Unknown location" }}",
+                    text = "Placed at: ${it.placedWhere}",
                     style = TextStyle(fontSize = 14.sp),
                     modifier = GlanceModifier.padding(bottom = 4.dp)
                 )
