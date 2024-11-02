@@ -2,9 +2,7 @@ package com.ribuufing.findlostitem
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.graphics.Color
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -37,8 +35,6 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-
-        // Kullanıcı oturum durumunu kontrol et
         val startDestination = if (Firebase.auth.currentUser != null) {
             BottomNavigationItems.Home.route
         } else {

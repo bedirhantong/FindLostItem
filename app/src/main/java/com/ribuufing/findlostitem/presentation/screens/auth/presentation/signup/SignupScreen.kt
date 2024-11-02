@@ -57,7 +57,6 @@ fun RegisterScreen(
 
     val context = LocalContext.current
 
-    // Firebase Storage reference for loading the image
     LaunchedEffect(Unit) {
         val storageRef = Firebase.storage
             .getReference("auth/")
@@ -78,7 +77,6 @@ fun RegisterScreen(
             }
     }
 
-    // Gözlemlemek için `userState` kullanarak LaunchedEffect tanımlandı
     LaunchedEffect(userState) {
         when (userState) {
             is Result.Success -> {
@@ -93,7 +91,7 @@ fun RegisterScreen(
                 Toast.makeText(context, "Register failed: $errorMessage", Toast.LENGTH_SHORT).show()
             }
             is Result.Loading -> {
-                // Kayıt işlemi devam ederken bir yükleme göstergesi ekleyebilirsiniz
+                // Loading state
             }
             else -> Unit
         }
@@ -146,6 +144,7 @@ fun RegisterScreen(
             // Name Input
             OutlinedTextField(
                 value = name,
+                maxLines = 1,
                 onValueChange = { name = it },
                 label = { Text("Name") },
                 modifier = Modifier
@@ -165,6 +164,7 @@ fun RegisterScreen(
             // Email Input
             OutlinedTextField(
                 value = email,
+                maxLines = 1,
                 onValueChange = { email = it },
                 label = { Text("Email") },
                 modifier = Modifier
@@ -185,6 +185,7 @@ fun RegisterScreen(
             // Password Input
             OutlinedTextField(
                 value = password,
+                maxLines = 1,
                 onValueChange = { password = it },
                 label = { Text("Password") },
                 modifier = Modifier
@@ -236,20 +237,4 @@ fun RegisterScreen(
             )
         }
     }
-
-//    // Loading durumunda bulanıklaştırma ve yükleme göstergesi
-//    if (userState is Result.Loading) {
-//        Dialog(onDismissRequest = { /* Dismiss Engellendi */ }) {
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .background(Color.Black.copy(alpha = 0.4f)) // Arka planı bulanıklaştırır
-//            ) {
-//                CircularProgressIndicator(
-//                    modifier = Modifier.align(Alignment.Center),
-//                    color = Color(0xFFED822B)
-//                )
-//            }
-//        }
-//    }
 }
