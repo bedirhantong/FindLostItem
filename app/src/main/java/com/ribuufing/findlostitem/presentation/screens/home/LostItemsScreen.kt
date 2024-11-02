@@ -16,10 +16,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -38,7 +41,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -62,7 +67,7 @@ fun LostItemsScreen(
     viewModel: LostItemsViewModel = hiltViewModel(),
     navController: NavHostController
 ) {
-    val lostItems by viewModel.lostItems.collectAsState()
+    val lostItems by viewModel.filteredLostItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
@@ -71,11 +76,11 @@ fun LostItemsScreen(
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
-            // Trigger refresh logic
             viewModel.refreshLostItems()
             isRefreshing = false
         }
     }
+
     LaunchedEffect(Unit) {
         noInternetViewModel.checkInternetConnection()
     }
@@ -93,20 +98,19 @@ fun LostItemsScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                modifier = Modifier.fillMaxWidth().imePadding(),
+                modifier = Modifier.fillMaxWidth(),
                 title = {
                     Text(
                         text = "Lost Items",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         ),
-
                         color = MaterialTheme.colorScheme.secondary
                     )
                 },
                 actions = {
                     IconButton(onClick = {
-                        // Open Direct Messages screen
+
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.dm),
@@ -119,60 +123,100 @@ fun LostItemsScreen(
             )
         },
         content = {
-            // Apply offset to content to simulate it moving down with swipe gesture
-            SwipeRefresh(
-                state = swipeRefreshState,
-                onRefresh = { isRefreshing = true },
-                indicator = { state, trigger ->
-                    SwipeRefreshIndicator(
-                        state = state,
-                        refreshTriggerDistance = trigger,
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        backgroundColor = MaterialTheme.colorScheme.background,
-                        elevation = 8.dp,
-                    )
-                }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it)
             ) {
-                val offsetY = min(swipeRefreshState.indicatorOffset.dp, 80.dp) // Cap the movement
+                OutlinedTextField(
+                    value = viewModel.searchQuery.collectAsState().value,
+                    onValueChange = { viewModel.updateSearchQuery(it) },
+                    label = {
+                        Text(
+                            "Search for items",
+                            style = TextStyle(
+                                color = Color(0xFF99704D),
+                                fontWeight = FontWeight.Normal
+                            )
+                        )
+                    }, // Etiket metnini güncelle
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 7.dp, end = 7.dp, top = 7.dp, bottom = 12.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    prefix = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search icon",
+                            tint = Color(0xFF99704D)
+                        )
+                    },
+                    maxLines = 1,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        cursorColor = Color(0xFFED822B),
+                        focusedBorderColor = Color(0xFFED822B),
+                        focusedPrefixColor = Color(0xFFED822B),
+                        unfocusedBorderColor = Color.Gray,
+                        focusedLabelColor = Color(0xFFED822B),
+                        focusedTextColor = Color(0xFF99704D),
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                )
 
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (isLoading) {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(it)
-                                .offset(y = offsetY)  // Move content down as user swipes
-                        ) {
-                            items(5) {
-                                ShimmerEffect(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .wrapContentSize()
-                                )
-                            }
-                        }
-                    } else {
-                        if (lostItems.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .offset(y = offsetY),  // Move content down as user swipes
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    "Gönderiler bulunamadı",
-                                    style = MaterialTheme.typography.titleLarge
-                                )
-                            }
-                        } else {
+                // SwipeRefresh
+                SwipeRefresh(
+                    state = swipeRefreshState,
+                    onRefresh = { isRefreshing = true },
+                    indicator = { state, trigger ->
+                        SwipeRefreshIndicator(
+                            state = state,
+                            refreshTriggerDistance = trigger,
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            backgroundColor = MaterialTheme.colorScheme.background,
+                            elevation = 8.dp,
+                        )
+                    }
+                ) {
+                    val offsetY =
+                        min(swipeRefreshState.indicatorOffset.dp, 80.dp) // Cap the movement
+
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if (isLoading) {
                             LazyColumn(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(it)
                                     .offset(y = offsetY)
                             ) {
-                                items(lostItems) { item ->
-                                    LostItemRow(item, viewModel,navController)
+                                items(5) {
+                                    ShimmerEffect(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .wrapContentSize()
+                                    )
+                                }
+                            }
+                        } else {
+                            if (lostItems.isEmpty()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .offset(y = offsetY),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        "Gönderiler bulunamadı",
+                                        style = MaterialTheme.typography.titleLarge
+                                    )
+                                }
+                            } else {
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .offset(y = offsetY)
+                                ) {
+                                    items(lostItems) { item ->
+                                        LostItemRow(item, viewModel, navController)
+                                    }
                                 }
                             }
                         }
@@ -182,6 +226,7 @@ fun LostItemsScreen(
         }
     )
 }
+
 
 @Composable
 fun ShimmerEffect(
@@ -278,7 +323,7 @@ fun ShimmerEffect(
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel,navController: NavHostController) {
+fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: NavHostController) {
     var upvoteCount by remember { mutableIntStateOf(item.numOfUpVotes) }
     var downvoteCount by remember { mutableIntStateOf(item.numOfDownVotes) }
 

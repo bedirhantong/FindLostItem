@@ -53,7 +53,6 @@ fun LoginScreen(
     val imageUrl = remember { mutableStateOf<String?>(null) }
     var isPasswordVisible by remember { mutableStateOf(false) }
 
-    // Firebase'den arka plan resmi alma işlemi
     LaunchedEffect(Unit) {
         val storageRef = Firebase.storage.getReference("auth/")
         storageRef.listAll()
@@ -72,7 +71,6 @@ fun LoginScreen(
             }
     }
 
-    // Kullanıcı durumu gözlemleniyor, başarılı olursa login yönlendirmesi yapılıyor
     LaunchedEffect(userState) {
         when (userState) {
             is Result.Success -> {
@@ -130,6 +128,7 @@ fun LoginScreen(
             // Email Input
             OutlinedTextField(
                 value = email,
+                maxLines = 1,
                 onValueChange = { email = it },
                 label = { Text("Email or username") },
                 modifier = Modifier
@@ -150,6 +149,7 @@ fun LoginScreen(
             // Password Input
             OutlinedTextField(
                 value = password,
+                maxLines = 1,
                 onValueChange = { password = it },
                 label = { Text("Password") },
                 modifier = Modifier

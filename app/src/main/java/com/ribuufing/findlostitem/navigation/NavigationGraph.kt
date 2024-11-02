@@ -89,7 +89,7 @@ fun NavigationGraph(
         ) { backStackEntry ->
             val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
             onBottomBarVisibility(false)
-            LostItemDetailScreen(navController,itemId)
+            LostItemDetailScreen(navController, itemId)
         }
     }
 }
