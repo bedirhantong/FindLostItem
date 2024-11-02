@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.glance.appwidget)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -36,6 +36,7 @@ uiTestManifest = "1.7.4"
 uiTooling = "1.7.4"
 firebaseStorageKtx = "21.0.1"
 runtimeLivedata = "1.7.4"
+glanceAppwidget = "1.1.1"
 
 [libraries]
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPagerIndicators" }
@@ -80,6 +81,7 @@ retrofit2-kotlinx-serialization-converter = { module = "com.jakewharton.retrofit
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
+androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glanceAppwidget" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
