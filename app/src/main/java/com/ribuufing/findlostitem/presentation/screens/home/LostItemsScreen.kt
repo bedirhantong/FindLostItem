@@ -66,7 +66,7 @@ fun LostItemsScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
-    val isInternetAvailable by noInternetViewModel.isInternetAvailable // İnternet durumunu gözlemle
+    val isInternetAvailable by noInternetViewModel.isInternetAvailable
     val openDialog = remember { mutableStateOf(false) }
 
     LaunchedEffect(isRefreshing) {

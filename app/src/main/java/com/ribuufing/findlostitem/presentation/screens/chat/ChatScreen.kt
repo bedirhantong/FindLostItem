@@ -135,7 +135,7 @@ fun ChatAppBar(navController: NavHostController, scrollBehavior: TopAppBarScroll
                     fontSize = 18.sp
                 )
                 Text(
-                    text = item.foundWhere,
+                    text = item.foundWhere.toString(),
                     fontSize = 12.sp,
                     color = Color.Gray
                 )

@@ -80,7 +80,7 @@ fun LostItemDetailScreen(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = lostItem.foundWhere, style = MaterialTheme.typography.bodySmall)
+                    Text(text = lostItem.foundWhere.toString(), style = MaterialTheme.typography.bodySmall)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -90,7 +90,7 @@ fun LostItemDetailScreen(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = lostItem.placedWhere, style = MaterialTheme.typography.bodySmall)
+                    Text(text = lostItem.placedWhere.toString(), style = MaterialTheme.typography.bodySmall)
                 }
             }
 
