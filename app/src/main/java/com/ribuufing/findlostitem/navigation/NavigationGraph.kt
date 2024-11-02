@@ -14,6 +14,7 @@ import androidx.compose.animation.core.tween
 import androidx.navigation.NavBackStackEntry
 import com.ribuufing.findlostitem.presentation.screens.auth.presentation.login.LoginScreen
 import com.ribuufing.findlostitem.presentation.screens.auth.presentation.signup.RegisterScreen
+import com.ribuufing.findlostitem.presentation.screens.mapscreen.MapScreen
 import com.ribuufing.findlostitem.presentation.screens.profile.presentation.ProfileScreen
 import com.ribuufing.findlostitem.presentation.screens.profile.presentation.settings.SettingsScreen
 import com.ribuufing.findlostitem.presentation.screens.reportfounditem.presentation.ReportFoundItemScreen
@@ -38,8 +39,8 @@ fun NavigationGraph(
             ReportFoundItemScreen()
         }
         composable(BottomNavigationItems.MapItem.route) {
-            onBottomBarVisibility(true)
-            LostItemsScreen(navController = navController)
+            onBottomBarVisibility(false)
+            MapScreen(navController = navController)
         }
         composable(BottomNavigationItems.Profile.route) {
             onBottomBarVisibility(true)

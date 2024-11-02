@@ -6,9 +6,9 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface ApiService {
-    @GET("lost_items") // Kayıp eşyaları almak için endpoint
+    @GET("lost_items")
     suspend fun getLostItems(): List<LostItem>
 
-    @POST("lost_items") // Kayıp eşya eklemek için endpoint
+    @POST("lost_items")
     suspend fun addLostItem(@Body item: LostItem)
 }
