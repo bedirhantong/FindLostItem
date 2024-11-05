@@ -61,9 +61,11 @@ import com.google.accompanist.pager.*
 import androidx.compose.material.*
 import androidx.compose.ui.draw.clip
 import com.ribuufing.findlostitem.data.model.LostItem
+import com.ribuufing.findlostitem.data.model.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.ribuufing.findlostitem.utils.Result
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,12 +74,12 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     navController: NavHostController
 ) {
-    val userInfos by viewModel.userInfos.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
-    val isInternetAvailable by noInternetViewModel.isInternetAvailable // İnternet durumunu gözlemle
+    val isInternetAvailable by noInternetViewModel.isInternetAvailable
     val openDialog = remember { mutableStateOf(false) }
+    val userInfoState = viewModel.userInfos.collectAsState().value
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
@@ -88,13 +90,14 @@ fun ProfileScreen(
     }
 
     LaunchedEffect(Unit) {
-        noInternetViewModel.checkInternetConnection() // Bağlantı kontrolünü başlat
+        viewModel.refreshUserInfos()
+        noInternetViewModel.checkInternetConnection()
     }
 
     openDialog.value = !isInternetAvailable
 
     NoInternetScreen(openDialog = openDialog, onRetry = {
-        noInternetViewModel.checkInternetConnection() // Bağlantıyı tekrar kontrol et
+        noInternetViewModel.checkInternetConnection() // Retry checking the connection
     })
 
     Scaffold(
@@ -166,72 +169,122 @@ fun ProfileScreen(
                                 .padding(it)
                                 .offset(y = offsetY)  // Move content down as user swipes
                         ) {
-                            // Content of the screen
-                            val painter =
-                                rememberAsyncImagePainter(model = "https://www.pngarts.com/files/2/Cristiano-Ronaldo-PNG-High-Quality-Image.png")
-                            val painterState = painter.state
-
-                            Box() {
-                                Image(
-                                    painter = painter,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(100.dp)
-                                        .clip(MaterialTheme.shapes.medium),
-                                    contentScale = ContentScale.Fit
-                                )
-
-                                // Placeholder or Loading indicator
-                                if (painterState is AsyncImagePainter.State.Loading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier
-                                            .align(Alignment.Center)
-                                            .size(32.dp)
-                                    )
+                            // Check user data and display accordingly
+                            when (userInfoState) {
+                                is Result.Success -> {
+                                    val user = userInfoState.data
+                                    if (user != null) {
+                                        ProfileContent(user)
+                                    } else {
+                                        Text("No user data available")
+                                    }
                                 }
-
-                                // Error indicator
-                                if (painterState is AsyncImagePainter.State.Error) {
-                                    Text(
-                                        text = "Failed to load image.",
-                                        color = Color.Red,
-                                        modifier = Modifier.align(Alignment.Center)
-                                    )
+                                is Result.Failure -> {
+                                    Text("Error: ${userInfoState.exception.localizedMessage}")
+                                }
+                                else -> {
+                                    Text("Unknown state")
                                 }
                             }
-
-                            Text(
-                                text = "User Name",
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = "Create Date",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            TabPagerExample(it)
-
                         }
                     }
                 }
-
             }
         }
     )
 }
 
+@Composable
+fun ProfileContent(user: User) {
+    // Display the user information on the screen
+    Column(modifier = Modifier.padding(16.dp)) {
+        // Display the user's profile image
+        val painter = rememberAsyncImagePainter(model = user.imageUrl.ifEmpty { "https://cdn.pixabay.com/photo/2014/03/25/16/24/female-296989_1280.png" })
+        val painterState = painter.state
+
+        Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Image(
+                painter = painter,
+                contentDescription = "Profile Image",
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(MaterialTheme.shapes.medium),
+                contentScale = ContentScale.Fit
+            )
+
+            // Loading and error states for image
+            if (painterState is AsyncImagePainter.State.Loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(32.dp)
+                )
+            }
+
+            if (painterState is AsyncImagePainter.State.Error) {
+                Text(
+                    text = "Failed to load image.",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+        }
+
+        // User details
+        Text(
+            text = "Name: ${user.name}",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold
+            ),
+            color = MaterialTheme.colorScheme.secondary
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Email: ${user.email}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.secondary
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Phone: ${user.phone.ifEmpty { "Not provided" }}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.secondary
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "UID: ${user.uid}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.secondary
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Optionally, display the user's created items or chats if available
+        if (user.foundedItems.isNotEmpty()) {
+            Text("Founded Items: ${user.foundedItems.size}")
+        }
+
+        if (user.chats.isNotEmpty()) {
+            Text("Chats: ${user.chats.size}")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+//        TabPagerExample(it = PaddingValues(0.dp), foundItems = user.foundedItems)
+
+
+    }
+}
+
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun TabPagerExample(it: PaddingValues) {
+fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem> = emptyList()) {
     val tabs = listOf(
         "Found items"
 //        , "Tab 2", "Tab 3"
@@ -282,28 +335,24 @@ fun TabPagerExample(it: PaddingValues) {
                 .padding(it)
         ) { page ->
             when (page) {
-                0 -> ListContent()
-                1 -> ListContent()
-                2 -> ListContent()
+                0 -> ListContent(foundItems)
+                1 -> ListContent(foundItems)
+                2 -> ListContent(foundItems)
             }
         }
     }
 }
 
 @Composable
-fun ListContent() {
+fun ListContent( foundItems: List<LostItem> = emptyList()) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(bottom = 56.dp)
     ) {
-        items(8) { index ->
+        items(foundItems.size) { index ->
             LostItemRow(
-                LostItem(
-                    title = "Macbook Air M1 Proc. 2024 Model",
-                    date = "10/${index + 1}",
-                    images = listOf("https://t4.ftcdn.net/jpg/03/38/11/83/360_F_338118300_Ou8AWHQ5DOumFIghTtOOJ8isc6LmmbL0.jpg")
-                )
+                item = foundItems[index]
             )
         }
     }
