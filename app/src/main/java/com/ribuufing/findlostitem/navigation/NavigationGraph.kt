@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.ribuufing.findlostitem.presentation.screens.chat.ChatScreen
-import com.ribuufing.findlostitem.presentation.screens.home.LostItemsScreen
-import com.ribuufing.findlostitem.presentation.screens.onboarding.WelcomeScreen
+import com.ribuufing.findlostitem.presentation.chat.ChatScreen
+import com.ribuufing.findlostitem.presentation.home.LostItemsScreen
+import com.ribuufing.findlostitem.presentation.onboarding.WelcomeScreen
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -14,13 +14,13 @@ import androidx.compose.animation.core.tween
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.ribuufing.findlostitem.presentation.screens.auth.presentation.login.LoginScreen
-import com.ribuufing.findlostitem.presentation.screens.auth.presentation.signup.RegisterScreen
-import com.ribuufing.findlostitem.presentation.screens.lostitemdetail.LostItemDetailScreen
-import com.ribuufing.findlostitem.presentation.screens.mapscreen.MapScreen
-import com.ribuufing.findlostitem.presentation.screens.profile.presentation.ProfileScreen
-import com.ribuufing.findlostitem.presentation.screens.profile.presentation.settings.SettingsScreen
-import com.ribuufing.findlostitem.presentation.screens.reportfounditem.presentation.ReportFoundItemScreen
+import com.ribuufing.findlostitem.presentation.auth.presentation.login.LoginScreen
+import com.ribuufing.findlostitem.presentation.auth.presentation.signup.RegisterScreen
+import com.ribuufing.findlostitem.presentation.lostitemdetail.LostItemDetailScreen
+import com.ribuufing.findlostitem.presentation.mapscreen.MapScreen
+import com.ribuufing.findlostitem.presentation.profile.presentation.ProfileScreen
+import com.ribuufing.findlostitem.presentation.profile.presentation.settings.SettingsScreen
+import com.ribuufing.findlostitem.presentation.reportfounditem.ReportFoundItemScreen
 
 @Composable
 fun NavigationGraph(
