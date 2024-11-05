@@ -46,15 +46,15 @@ class ChatViewModel @Inject constructor(
                 listOf(
                     Message(
                         id = 1,
-                        senderUser = User(1, "İbrahim Serhan Baymaz", imageUrl = "https://avatars.githubusercontent.com/u/102352030?v=4"),
-                        receiverUser = User(2, "Bedirhan Tong", imageUrl = "https://avatars.githubusercontent.com/u/70720131?v=4"),
+                        senderUser = User("1", "İbrahim Serhan Baymaz", imageUrl = "https://avatars.githubusercontent.com/u/102352030?v=4"),
+                        receiverUser = User("2", "Bedirhan Tong", imageUrl = "https://avatars.githubusercontent.com/u/70720131?v=4"),
                         content = "Hi, you found my laptop. Can we meet?",
                         date = "1/15 at 2pm"
                     ),
                     Message(
                         id = 2,
-                        senderUser = User(2, "Bedirhan Tong", imageUrl = "https://avatars.githubusercontent.com/u/70720131?v=4"),
-                        receiverUser = User(1, "İbrahim Serhan Baymaz", imageUrl = "https://avatars.githubusercontent.com/u/102352030?v=4"),
+                        senderUser = User("2", "Bedirhan Tong", imageUrl = "https://avatars.githubusercontent.com/u/70720131?v=4"),
+                        receiverUser = User("1", "İbrahim Serhan Baymaz", imageUrl = "https://avatars.githubusercontent.com/u/102352030?v=4"),
                         content = "I have a course now, let's meet at 4pm.",
                         date = "1/15 at 2:10pm"
                     )

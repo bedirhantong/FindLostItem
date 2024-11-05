@@ -1,10 +1,12 @@
 package com.ribuufing.findlostitem.presentation.auth.data.repository
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ribuufing.findlostitem.data.model.Chat
 import com.ribuufing.findlostitem.data.model.LostItem
+import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.presentation.auth.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -64,6 +66,26 @@ class UserRepositoryImpl @Inject constructor(
             emit(Result.Failure(e))
         }
     }
+
+    override fun fetchCurrentUserUid(): String {
+        Log.d("UserRepositoryImpl", "fetchCurrentUserUid: ${auth.currentUser?.uid}")
+        return auth.currentUser?.uid ?: ""
+    }
+
+    override fun fetchUserInfosByUid (uid: String): Flow<Result<User?>> = flow {
+        emit(Result.Loading)
+        try {
+            val db = FirebaseFirestore.getInstance()
+            val document = db.collection("users").document(uid).get().await()
+            val user = document.toObject(User::class.java)
+            Log.d("UserRepositoryImpl", "fetchUserInfosByUid: $user")
+
+            emit(Result.Success(user))
+        } catch (e: Exception) {
+            emit(Result.Failure(e))
+        }
+    }
+
 
 //    override fun deleteUser(): Flow<Result<Unit>> = flow {
 //        try {
