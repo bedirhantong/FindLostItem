@@ -51,7 +51,7 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun FindLostItemTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
