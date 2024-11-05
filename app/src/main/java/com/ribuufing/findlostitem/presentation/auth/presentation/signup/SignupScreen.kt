@@ -215,7 +215,7 @@ fun RegisterScreen(
             // Signup Button
             Button(
                 onClick = {
-                    authViewModel.registerUser(email, password)
+                    authViewModel.registerUser(email, password, name)
                 },
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFED822B)),
                 modifier = Modifier

@@ -161,14 +161,14 @@ fun MessageBubble(message: Message) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        horizontalArrangement = if (message.senderUser.id == 1) Arrangement.Start else Arrangement.End
+        horizontalArrangement = if (message.senderUser.uid == 1) Arrangement.Start else Arrangement.End
     ) {
-        if (message.senderUser.id == 1) {
+        if (message.senderUser.uid == 1) {
             UserImage(message.senderUser.imageUrl)
             Spacer(modifier = Modifier.width(8.dp))
         }
         Column(
-            horizontalAlignment = if (message.senderUser.id == 1) Alignment.Start else Alignment.End
+            horizontalAlignment = if (message.senderUser.uid == 1) Alignment.Start else Alignment.End
         ) {
             Text(
                 text = message.senderUser.name,
@@ -179,7 +179,7 @@ fun MessageBubble(message: Message) {
             Box(
                 modifier = Modifier
                     .background(
-                        color = if (message.senderUser.id == 1) Color(0xFFF0F5F5) else Color(
+                        color = if (message.senderUser.uid == 1) Color(0xFFF0F5F5) else Color(
                             0xFFED822B
                         ),
                         shape = RoundedCornerShape(12.dp)
@@ -188,7 +188,7 @@ fun MessageBubble(message: Message) {
             ) {
                 Text(
                     text = message.content, fontSize = 16.sp,
-                    color = if (message.senderUser.id == 1) Color.Black else Color.White,
+                    color = if (message.senderUser.uid == 1) Color.Black else Color.White,
                 )
             }
             Text(
@@ -197,7 +197,7 @@ fun MessageBubble(message: Message) {
                 color = Color.Gray
             )
         }
-        if (message.senderUser.id != 1) {
+        if (message.senderUser.uid != 1) {
             Spacer(modifier = Modifier.width(8.dp))
             UserImage(message.senderUser.imageUrl)
         }

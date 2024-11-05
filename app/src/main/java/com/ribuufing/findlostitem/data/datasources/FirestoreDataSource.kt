@@ -3,6 +3,7 @@ package com.ribuufing.findlostitem.data.datasources
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ribuufing.findlostitem.data.model.Location
 import com.ribuufing.findlostitem.data.model.LostItem
+import com.ribuufing.findlostitem.data.model.User
 import kotlinx.coroutines.tasks.await
 import kotlin.math.atan2
 import kotlin.math.cos
