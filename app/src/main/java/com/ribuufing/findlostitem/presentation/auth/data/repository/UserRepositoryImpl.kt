@@ -2,6 +2,9 @@ package com.ribuufing.findlostitem.presentation.auth.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.FirebaseFirestore
+import com.ribuufing.findlostitem.data.model.Chat
+import com.ribuufing.findlostitem.data.model.LostItem
 import com.ribuufing.findlostitem.presentation.auth.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -13,10 +16,29 @@ class UserRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth
 ) : UserRepository {
 
-    override fun registerUser(email: String, password: String): Flow<Result<FirebaseUser?>> = flow {
+    override fun registerUser(email: String, password: String, name: String): Flow<Result<FirebaseUser?>> = flow {
         emit(Result.Loading) // Burada Loading durumunu emit ediyoruz.
         try {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
+            val user = result.user
+
+            //add user to firestore database with all the details
+            val hashMap = hashMapOf(
+                "uid" to user?.uid, // Use Firebase UID
+                "name" to name,
+                "password" to password,
+                "email" to email,
+                "imageUrl" to "", // New field
+                "phone" to "",       // New field
+                "foundedItems" to emptyList<LostItem>(), // Initialize empty list
+                "chats" to emptyList<Chat>()              // Initialize empty list
+            )
+            //add user to firestore database with all the details
+            val db = FirebaseFirestore.getInstance()
+            db.collection("users").document(user?.uid!!).set(hashMap).await()
+
+
+
             emit(Result.Success(result.user)) // Başarı durumunu emit ediyoruz.
         } catch (e: Exception) {
             emit(Result.Failure(e)) // Hata durumunu emit ediyoruz.

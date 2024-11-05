@@ -9,7 +9,7 @@ import javax.inject.Inject
 class RegisterUserUseCase @Inject constructor(
     private val userRepository: UserRepository
 ) {
-    operator fun invoke(email: String, password: String): Flow<Result<FirebaseUser?>> {
-        return userRepository.registerUser(email, password)
+    operator fun invoke(email: String, password: String, name: String): Flow<Result<FirebaseUser?>> {
+        return userRepository.registerUser(email, password, name)
     }
 }
