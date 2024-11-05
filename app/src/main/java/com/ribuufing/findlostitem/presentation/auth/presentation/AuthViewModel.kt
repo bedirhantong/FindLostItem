@@ -26,7 +26,7 @@ class AuthViewModel @Inject constructor(
             _userState.value = Result.Loading
             try {
                 registerUserUseCase(email, password, name).collect { result ->
-                    _userState.value = result // Burada direkt result ataması yapıyoruz.
+                    _userState.value = result
                 }
             } catch (e: Exception) {
                 _userState.value = Result.Failure(e)
