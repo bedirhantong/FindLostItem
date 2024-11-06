@@ -1,5 +1,7 @@
 package com.ribuufing.findlostitem.presentation.profile.presentation
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -67,6 +69,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.ribuufing.findlostitem.utils.Result
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -80,6 +83,7 @@ fun ProfileScreen(
     val isInternetAvailable by noInternetViewModel.isInternetAvailable
     val openDialog = remember { mutableStateOf(false) }
     val userInfoState = viewModel.userInfos.collectAsState().value
+    val lostItems by viewModel.lostItems.collectAsState()
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
@@ -143,38 +147,23 @@ fun ProfileScreen(
                     )
                 }
             ) {
-                // Content of the screen
-                val offsetY = min(swipeRefreshState.indicatorOffset.dp, 80.dp) // Cap the movement
-
                 Box(modifier = Modifier.fillMaxSize()) {
                     if (isLoading) {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(it)
-                                .offset(y = offsetY)  // Move content down as user swipes
-                        ) {
-                            items(5) {
-                                ShimmerEffect(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .wrapContentSize()
-                                )
-                            }
+                        LazyColumn {
+                            items(5) { ShimmerEffect(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp)
+                                    .padding(16.dp)
+                            ) }
                         }
                     } else {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(it)
-                                .offset(y = offsetY)  // Move content down as user swipes
-                        ) {
-                            // Check user data and display accordingly
+                        Column(modifier = Modifier.fillMaxSize()) {
                             when (userInfoState) {
                                 is Result.Success -> {
                                     val user = userInfoState.data
                                     if (user != null) {
-                                        ProfileContent(user)
+                                        ProfileContent(user, lostItems)
                                     } else {
                                         Text("No user data available")
                                     }
@@ -195,7 +184,7 @@ fun ProfileScreen(
 }
 
 @Composable
-fun ProfileContent(user: User) {
+fun ProfileContent(user: User, foundItems: List<LostItem>) {
     // Display the user information on the screen
     Column(modifier = Modifier.padding(16.dp)) {
         // Display the user's profile image
@@ -265,9 +254,8 @@ fun ProfileContent(user: User) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Optionally, display the user's created items or chats if available
         if (user.foundedItems.isNotEmpty()) {
-            Text("Founded Items: ${user.foundedItems.size}")
+            Text("Founded Items: ${user.foundedItems}")
         }
 
         if (user.chats.isNotEmpty()) {
@@ -276,7 +264,7 @@ fun ProfileContent(user: User) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-//        TabPagerExample(it = PaddingValues(0.dp), foundItems = user.foundedItems)
+        TabPagerExample(it = PaddingValues(0.dp), foundItems =  foundItems)
 
 
     }
@@ -284,7 +272,7 @@ fun ProfileContent(user: User) {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem> = emptyList()) {
+fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem>) {
     val tabs = listOf(
         "Found items"
 //        , "Tab 2", "Tab 3"
@@ -336,15 +324,16 @@ fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem> = emptyList())
         ) { page ->
             when (page) {
                 0 -> ListContent(foundItems)
-                1 -> ListContent(foundItems)
-                2 -> ListContent(foundItems)
+//                1 -> ListContent(foundItems)
+//                2 -> ListContent(foundItems)
             }
         }
     }
 }
 
 @Composable
-fun ListContent( foundItems: List<LostItem> = emptyList()) {
+fun ListContent(foundItems:  List<LostItem>) {
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()

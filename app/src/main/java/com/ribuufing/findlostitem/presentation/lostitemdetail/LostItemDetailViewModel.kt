@@ -10,23 +10,29 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-
 @HiltViewModel
 class LostItemDetailViewModel @Inject constructor(
     private val getLostItemByIdUseCase: GetLostItemByIdUseCase
 ) : ViewModel() {
-    private val _lostItem = MutableStateFlow(LostItem())
-    val lostItem = _lostItem
+    private val _lostItem = MutableStateFlow<LostItem?>(null)
+    val lostItem: StateFlow<LostItem?> = _lostItem
 
-    private val _isLoading = MutableStateFlow(true)  // İstek durumunu kontrol etmek için
+    private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
-
 
     fun getLostItemById(itemId: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            _lostItem.value = getLostItemByIdUseCase.invoke(itemId)
-            _isLoading.value = false
+            try {
+                getLostItemByIdUseCase(itemId).collect { item ->
+                    _lostItem.value = item
+                }
+            } catch (e: Exception) {
+                // Handle the error, log, or display a message to the user if necessary
+                _lostItem.value = null
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }

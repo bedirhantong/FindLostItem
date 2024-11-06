@@ -55,117 +55,129 @@ fun LostItemDetailScreen(
             CircularProgressIndicator()
         }
     } else {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 46.dp,
-                    bottom = 8.dp
+        lostItem?.let { item -> // Ensure lostItem is not null before accessing properties
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 46.dp,
+                        bottom = 8.dp
+                    )
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-                .verticalScroll(rememberScrollState())
-        ) {
-            Text(
-                text = lostItem.title,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
 
-            Column(modifier = Modifier.padding(bottom = 8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Place,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = lostItem.foundWhere.toString(), style = MaterialTheme.typography.bodySmall)
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = lostItem.placedWhere.toString(), style = MaterialTheme.typography.bodySmall)
-                }
-            }
-
-            // Date and Time
-            Text(
-                text = lostItem.date,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            if (lostItem.images.isNotEmpty()) {
-                HorizontalPager(
-                    count = lostItem.images.size,
-                    state = pagerState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                ) { page ->
-                    val painter: Painter = rememberAsyncImagePainter(model = lostItem.images[page])
-                    Image(
-                        painter = painter,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .fillMaxWidth()
-                ) {
-                    repeat(lostItem.images.size) { index ->
-                        val color = if (index == pagerState.currentPage) Color.Black else Color.Gray
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .padding(2.dp)
+                Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Place,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
                         )
-                        if (index < lostItem.images.size - 1) {
-                            Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = item.foundWhere.toString(), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = item.placedWhere.toString(), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                // Date and Time
+                Text(
+                    text = item.date,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                if (item.images.isNotEmpty()) {
+                    HorizontalPager(
+                        count = item.images.size,
+                        state = pagerState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                    ) { page ->
+                        val painter: Painter = rememberAsyncImagePainter(model = item.images[page])
+                        Image(
+                            painter = painter,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .fillMaxWidth()
+                    ) {
+                        repeat(item.images.size) { index ->
+                            val color = if (index == pagerState.currentPage) Color.Black else Color.Gray
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(color)
+                                    .padding(2.dp)
+                            )
+                            if (index < item.images.size - 1) {
+                                Spacer(modifier = Modifier.width(4.dp)
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            Text(
-                text = lostItem.description,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+                Text(
+                    text = item.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Button(
-                    onClick = {
-                        navController.navigate("chat/$itemId")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Button(
+                        onClick = {
+                            navController.navigate("chat/$itemId")
+                        }
+                    ) {
+                        Text("Message", color = Color.White)
                     }
-                ) {
-                    Text("Message", color = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    OutlinedButton(
+                        onClick = { /* Open dialer with item's contact number */ },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFC8C03))
+                    ) {
+                        Text("Call")
+                    }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                OutlinedButton(
-                    onClick = { /* Open dialer with item's contact number */ },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFC8C03))
-                ) {
-                    Text("Call")
-                }
+            }
+        } ?: run {
+            // Show a placeholder or error message if lostItem is null
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Item details not found")
             }
         }
     }
 }
+

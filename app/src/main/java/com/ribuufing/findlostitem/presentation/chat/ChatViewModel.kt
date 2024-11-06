@@ -21,8 +21,8 @@ class ChatViewModel @Inject constructor(
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages
 
-    private val _lostItem = MutableStateFlow(LostItem())
-    val lostItem = _lostItem
+    private val _lostItem = MutableStateFlow<LostItem?>(null)
+    val lostItem: StateFlow<LostItem?> = _lostItem
 
     // Yeni mesaj ekleme fonksiyonu
     fun addMessage(message: Message) {
@@ -35,7 +35,15 @@ class ChatViewModel @Inject constructor(
 
     fun getLostItemById(itemId: String) {
         viewModelScope.launch {
-            _lostItem.value = getLostItemByIdUseCase.invoke(itemId)
+            try {
+                getLostItemByIdUseCase(itemId).collect { item ->
+                    _lostItem.value = item
+                }
+            } catch (e: Exception) {
+                // Handle the error, log, or display a message to the user if necessary
+                _lostItem.value = null
+            } finally {
+            }
         }
     }
 
