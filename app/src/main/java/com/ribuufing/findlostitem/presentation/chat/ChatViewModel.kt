@@ -35,7 +35,7 @@ class ChatViewModel @Inject constructor(
 
     fun getLostItemById(itemId: String) {
         viewModelScope.launch {
-            _lostItem.value = getLostItemByIdUseCase.invoke(itemId)
+//            _lostItem.value = getLostItemByIdUseCase.invoke(itemId)
         }
     }
 

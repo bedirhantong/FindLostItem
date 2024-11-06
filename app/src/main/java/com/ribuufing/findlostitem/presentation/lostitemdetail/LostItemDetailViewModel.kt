@@ -25,7 +25,7 @@ class LostItemDetailViewModel @Inject constructor(
     fun getLostItemById(itemId: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            _lostItem.value = getLostItemByIdUseCase.invoke(itemId)
+//            _lostItem.value = getLostItemByIdUseCase.invoke(itemId)
             _isLoading.value = false
         }
     }
