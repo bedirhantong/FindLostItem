@@ -77,7 +77,7 @@ fun ChatScreen(
     }
 
     Scaffold(
-        topBar = { ChatAppBar(navController, scrollBehavior,lostItem) },
+        topBar = { lostItem?.let { ChatAppBar(navController, scrollBehavior, it) } },
         content = { innerPadding ->
             LazyColumn(
                 state = listState,
