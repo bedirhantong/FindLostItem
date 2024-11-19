@@ -35,8 +35,10 @@ import coil.compose.AsyncImage
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import com.ribuufing.findlostitem.R
+import com.ribuufing.findlostitem.navigation.Routes
 import com.ribuufing.findlostitem.presentation.auth.presentation.AuthViewModel
 import com.ribuufing.findlostitem.utils.Result
+import okhttp3.Route
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
@@ -82,9 +84,7 @@ fun RegisterScreen(
             is Result.Success -> {
                 // Kayıt başarılı olduğunda kullanıcıyı giriş ekranına yönlendir
                 Toast.makeText(context, "Kayıt başarılı!", Toast.LENGTH_SHORT).show()
-                navController.navigate("login") {
-                    popUpTo("register") { inclusive = true } // Register ekranını yığınlardan kaldırarak geri dönüldüğünde login ekranında kalır.
-                }
+                navController.navigateUp()
             }
             is Result.Failure -> {
                 val errorMessage = (userState as? Result.Failure)?.exception?.localizedMessage
@@ -233,7 +233,7 @@ fun RegisterScreen(
                 color = Color(0xFFED822B),
                 modifier = Modifier
                     .padding(top = 12.dp)
-                    .clickable { navController.navigate("login") }
+                    .clickable { navController.navigateUp() }
             )
         }
     }

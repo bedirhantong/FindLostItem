@@ -119,8 +119,9 @@ fun LoginScreen(
 
             // Mesaj
             Text(
-                text = "You will never try to find alone.",
+                text = "You will never try to find your lost item alone.",
                 fontSize = 16.sp,
+                maxLines = 2,
                 color = Color(0xFF99704D),
                 modifier = Modifier.padding(16.dp)
             )
@@ -206,7 +207,7 @@ fun LoginScreen(
                 color = Color(0xFF99704D),
                 modifier = Modifier
                     .padding(top = 12.dp)
-                    .clickable { navController.navigate("signup") }
+                    .clickable { navController.navigate(Routes.Signup.route) }
             )
         }
     }
