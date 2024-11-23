@@ -1,6 +1,8 @@
 package com.ribuufing.findlostitem.presentation.auth.domain.repository
 
 import com.google.firebase.auth.FirebaseUser
+import com.ribuufing.findlostitem.data.model.Chat
+import com.ribuufing.findlostitem.data.model.Message
 import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.utils.Result
 import kotlinx.coroutines.flow.Flow

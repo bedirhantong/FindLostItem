@@ -1,11 +1,17 @@
 package com.ribuufing.findlostitem.presentation.chat
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ribuufing.findlostitem.data.model.Chat
 import com.ribuufing.findlostitem.data.model.LostItem
 import com.ribuufing.findlostitem.data.model.Message
 import com.ribuufing.findlostitem.data.model.User
+import com.ribuufing.findlostitem.domain.use_cases.ChatUseCase
+import com.ribuufing.findlostitem.domain.use_cases.GetCurrentUserUidUseCase
 import com.ribuufing.findlostitem.domain.use_cases.GetLostItemByIdUseCase
+import com.ribuufing.findlostitem.domain.use_cases.GetUserInfosByUidUseCase
+import com.ribuufing.findlostitem.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,59 +21,141 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val getLostItemByIdUseCase: GetLostItemByIdUseCase
+    private val getUserInfosByUidUseCase: GetUserInfosByUidUseCase,
+    private val getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
+    private val chatUseCase: ChatUseCase
 ) : ViewModel() {
+
+    fun createOrGetChat(receiverUid: String) {
+        val senderUid = getCurrentUserUid()
+        viewModelScope.launch {
+            chatUseCase.createOrGetChat(senderUid, receiverUid).collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        chatId = result.data.id
+                        if (chatId!!.isNotBlank()) {
+                            getMessages(chatId!!)
+                        } else {
+                            Log.e("ChatViewModel", "Chat has an empty ID")
+                        }
+                    }
+                    is Result.Failure -> {
+                        Log.e("ChatViewModel", "Failed to create or get chat: ${result.exception}")
+                    }
+                    is Result.Loading -> {
+                        _isLoading.value = true
+                    }
+                }
+            }
+        }
+    }
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages
 
-    private val _lostItem = MutableStateFlow<LostItem?>(null)
-    val lostItem: StateFlow<LostItem?> = _lostItem
+    private val _senderUserInfos = MutableStateFlow<Result<User?>>(Result.Loading)
+    val senderUserInfos: StateFlow<Result<User?>> = _senderUserInfos
 
-    // Yeni mesaj ekleme fonksiyonu
-    fun addMessage(message: Message) {
+    private val _receiverUserInfos = MutableStateFlow<Result<User?>>(Result.Loading)
+    val receiverUserInfos: StateFlow<Result<User?>> = _receiverUserInfos
+
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _sendMessageState = MutableStateFlow<Result<Boolean?>>(Result.Loading)
+    val sendMessageState: StateFlow<Result<Boolean?>> get() = _sendMessageState
+
+    private var chatId: String? = null
+
+    // Refresh user information
+    fun refreshUserInfos(receiverUid: String) {
         viewModelScope.launch {
-            _messages.update { currentMessages ->
-                currentMessages + message // Eski mesajların sonuna ekle
-            }
+            _isLoading.value = true
+            getUserInfosByUid(getCurrentUserUid(), receiverUid)
+            _isLoading.value = false
         }
     }
 
-    fun getLostItemById(itemId: String) {
+    fun getCurrentUserUid(): String {
+        return getCurrentUserUidUseCase.invoke()
+    }
+
+    // Get user information for sender and receiver
+    private fun getUserInfosByUid(senderUid: String, receiverUid: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                getLostItemByIdUseCase(itemId).collect { item ->
-                    _lostItem.value = item
+                getUserInfosByUidUseCase(senderUid).collect { result ->
+                    _senderUserInfos.value = result
+                }
+
+                getUserInfosByUidUseCase(receiverUid).collect { result ->
+                    _receiverUserInfos.value = result
                 }
             } catch (e: Exception) {
-                // Handle the error, log, or display a message to the user if necessary
-                _lostItem.value = null
+                _senderUserInfos.value = Result.Failure(e)
+                _receiverUserInfos.value = Result.Failure(e)
             } finally {
+                _isLoading.value = false
             }
         }
     }
 
-    // Dummy veri eklemek için (test amaçlı)
-    fun addDummyData() {
+
+    fun createChat(receiverUid: String) {
+        val senderUid = getCurrentUserUid()
         viewModelScope.launch {
-            _messages.update {
-                listOf(
-                    Message(
-                        id = 1,
-                        senderUser = User("1", "İbrahim Serhan Baymaz", imageUrl = "https://avatars.githubusercontent.com/u/102352030?v=4"),
-                        receiverUser = User("2", "Bedirhan Tong", imageUrl = "https://avatars.githubusercontent.com/u/70720131?v=4"),
-                        content = "Hi, you found my laptop. Can we meet?",
-                        date = "1/15 at 2pm"
-                    ),
-                    Message(
-                        id = 2,
-                        senderUser = User("2", "Bedirhan Tong", imageUrl = "https://avatars.githubusercontent.com/u/70720131?v=4"),
-                        receiverUser = User("1", "İbrahim Serhan Baymaz", imageUrl = "https://avatars.githubusercontent.com/u/102352030?v=4"),
-                        content = "I have a course now, let's meet at 4pm.",
-                        date = "1/15 at 2:10pm"
-                    )
-                )
+            chatUseCase.createChat(senderUid, receiverUid).collect { result ->
+                if (result is Result.Success) {
+                    chatId = result.data.id
+                    getMessages(chatId!!)
+                } else if (result is Result.Failure) {
+                    Log.e("ChatViewModel", "Failed to create chat: ${result.exception}")
+                }
             }
+        }
+    }
+
+    fun sendMessage(message: Message) {
+        viewModelScope.launch {
+            chatId?.let { id ->
+                chatUseCase.sendMessageToChat(id, message).collect { result ->
+                    _sendMessageState.value = result
+                    if (result is Result.Success) {
+                        addMessage(message)
+                        Log.d("ChatViewModel", "Message Sent: ${message.content}")
+                    } else if (result is Result.Failure) {
+                        Log.e("ChatViewModel", "Failed to send message: ${result.exception}")
+                    }
+                }
+            } ?: Log.e("ChatViewModel", "Chat ID is null")
+        }
+    }
+
+    private fun getMessages(chatId: String) {
+        viewModelScope.launch {
+            chatUseCase.getMessages(chatId).collect { result ->
+                _isLoading.value = false
+                when (result) {
+                    is Result.Success -> {
+                        _messages.value = result.data
+                    }
+                    is Result.Failure -> {
+                        Log.e("ChatViewModel", "Failed to get messages: ${result.exception}")
+                        _messages.value = emptyList()
+                    }
+                    is Result.Loading -> {
+                        _messages.value = emptyList()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun addMessage(message: Message) {
+        _messages.update { currentMessages ->
+            currentMessages + message
         }
     }
 }
+

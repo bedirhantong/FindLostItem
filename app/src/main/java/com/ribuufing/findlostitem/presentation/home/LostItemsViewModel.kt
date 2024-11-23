@@ -24,7 +24,6 @@ class LostItemsViewModel @Inject constructor(
     private val downVoteItemUseCase: DownVoteItemUseCase
 ) : ViewModel() {
     private val _lostItems = MutableStateFlow<List<LostItem>>(emptyList())
-    val lostItems: StateFlow<List<LostItem>> = _lostItems
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -74,12 +73,6 @@ class LostItemsViewModel @Inject constructor(
 
     fun refreshLostItems() {
         fetchLostItems()
-    }
-
-    private fun addDummyData() {
-        viewModelScope.launch {
-            getLostItemsUseCase.addDummyData()
-        }
     }
 }
 

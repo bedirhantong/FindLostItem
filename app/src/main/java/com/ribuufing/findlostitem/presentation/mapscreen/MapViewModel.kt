@@ -5,9 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ribuufing.findlostitem.data.model.Location
 import com.ribuufing.findlostitem.data.model.LostItem
-import com.ribuufing.findlostitem.domain.use_cases.AddDummyDataUseCase
 import com.ribuufing.findlostitem.domain.use_cases.GetLostItemsUseCase
-import com.ribuufing.findlostitem.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,15 +31,8 @@ class MapViewModel @Inject constructor(
     val isBottomSheetExpanded: StateFlow<Boolean> = _isBottomSheetExpanded
     init {
         fetchLostItems()
-//        addDummyData()
     }
 
-    private fun addDummyData() {
-        viewModelScope.launch {
-            getLostItemsUseCase.addDummyData()
-        }
-    }
-    // Fetch all lost items and cluster them
     private fun fetchLostItems() {
         viewModelScope.launch {
             _lostItems.value = getLostItemsUseCase.invoke()
@@ -49,7 +40,6 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    // Clustering logic based on proximity and density
     private fun clusterLostItems() {
         val items = _lostItems.value
         val clusters = mutableListOf<Cluster>()

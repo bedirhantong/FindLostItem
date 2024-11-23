@@ -1,287 +1,271 @@
 package com.ribuufing.findlostitem.presentation.chat
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Scaffold
-import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
-import coil.compose.AsyncImagePainter
-import coil.compose.rememberAsyncImagePainter
-import com.ribuufing.findlostitem.R
-import com.ribuufing.findlostitem.data.model.LostItem
 import com.ribuufing.findlostitem.data.model.Message
 import com.ribuufing.findlostitem.data.model.User
+import com.ribuufing.findlostitem.utils.Result
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    navController: NavHostController,
-    itemId: String,
-    chatViewModel: ChatViewModel = hiltViewModel()
+    receiverUid: String,
+    chatViewModel: ChatViewModel = hiltViewModel(),
 ) {
     val messages by chatViewModel.messages.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
-    val listState = rememberLazyListState()
-    val scrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val lostItem by chatViewModel.lostItem.collectAsState()
+    val isLoading by chatViewModel.isLoading.collectAsState()
+    val senderUserInfos = chatViewModel.senderUserInfos.collectAsState().value
+    val receiverUserInfos = chatViewModel.receiverUserInfos.collectAsState().value
 
-    LaunchedEffect(Unit) {
-        chatViewModel.addDummyData()
-        chatViewModel.getLostItemById(itemId)
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(receiverUid) {
+        chatViewModel.createOrGetChat(receiverUid)
+    }
+
+    LaunchedEffect(messages) {
+        if (messages.isNotEmpty()) {
+            coroutineScope.launch {
+                listState.animateScrollToItem(messages.size - 1)
+            }
+        }
     }
 
     Scaffold(
-        topBar = { lostItem?.let { ChatAppBar(navController, scrollBehavior, it) } },
-        content = { innerPadding ->
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp),
-            ) {
-                items(messages) { message ->
-                    MessageBubble(message = message)
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        },
-        bottomBar = {
-            Box(
-                modifier = Modifier
-                    .navigationBarsPadding()
-//                    .imePadding() // Klavye açıldığında yukarı iter
-            ) {
-                MessageInputBar { content ->
-                    coroutineScope.launch {
-                        chatViewModel.addMessage(
-                            Message(
-                                id = messages.size + 1,
-                                senderUser = User(
-                                    "2",
-                                    "Bedirhan Tong",
-                                    imageUrl = "https://avatars.githubusercontent.com/u/70720131?v=4"
-                                ),
-                                receiverUser = User(
-                                    "1", "İbrahim Serhan Baymaz",
-                                    imageUrl = "https://avatars.githubusercontent.com/u/102352030?v=4"
-                                ),
-                                content = content,
-                                date = "Just now"
-                            )
-                        )
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Chat",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
+                navigationIcon = {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+
+                },
+                colors = TopAppBarDefaults.smallTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.weight(1f)) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(messages) { message ->
+                            MessageItem(message = message, senderUserInfos = senderUserInfos)
+                        }
                     }
                 }
+                SendMessageBar(chatViewModel = chatViewModel, receiverUid = receiverUid)
+            }
+
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
-    )
+    }
 }
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatAppBar(navController: NavHostController, scrollBehavior: TopAppBarScrollBehavior, item : LostItem) {
-    TopAppBar(
-        title = {
-            Column {
-                Text(
-                    text = item.title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-                Text(
-                    text = item.foundWhere.toString(),
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
-        },
-        navigationIcon = {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(
-                    modifier = Modifier.size(24.dp),
-                    painter = painterResource(id = R.drawable.back),
-                    contentDescription = "Back"
-                )
-            }
-        },
-        scrollBehavior = scrollBehavior
+fun SendMessageBar(
+    chatViewModel: ChatViewModel,
+    receiverUid: String
+) {
+    var messageText by remember { mutableStateOf("") }
+    val senderUid = chatViewModel.getCurrentUserUid()
+    val date = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+    val focusRequester = remember { FocusRequester() }
 
-    )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.background,
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            TextField(
+                value = messageText,
+                onValueChange = { messageText = it },
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester),
+                placeholder = { Text("Type a message...") },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardActions = KeyboardActions(onSend = {
+                    if (messageText.isNotBlank()) {
+                        sendMessage(chatViewModel, senderUid, receiverUid, messageText, date)
+                        messageText = ""
+                    }
+                }),
+                colors = TextFieldDefaults.textFieldColors(
+                    containerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ),
+                maxLines = 5
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = {
+                    if (messageText.isNotBlank()) {
+                        sendMessage(chatViewModel, senderUid, receiverUid, messageText, date)
+                        messageText = ""
+                        focusRequester.requestFocus()
+                    }
+                },
+                modifier = Modifier.align(Alignment.Bottom)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = "Send",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
 }
 
+private fun sendMessage(
+    chatViewModel: ChatViewModel,
+    senderUid: String,
+    receiverUid: String,
+    content: String,
+    date: String
+) {
+    val newMessage = Message(
+        content = content,
+        senderUserUid = senderUid,
+        receiverUserUid = receiverUid,
+        id = "",  // This will be set by Firestore
+        date = date
+    )
+    chatViewModel.sendMessage(newMessage)
+}
+
+
 @Composable
-fun MessageBubble(message: Message) {
-    Row(
+fun MessageItem(message: Message, senderUserInfos: Result<User?>) {
+    val isSender = senderUserInfos is Result.Success && message.senderUserUid == senderUserInfos.data?.uid
+    val bubbleColor = if (isSender) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.secondaryContainer
+    }
+    val textColor = if (isSender) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    }
+    val alignment = if (isSender) Alignment.End else Alignment.Start
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        horizontalArrangement = if (message.senderUser.uid == "1") Arrangement.Start else Arrangement.End
+        horizontalAlignment = alignment
     ) {
-        if (message.senderUser.uid == "1") {
-            UserImage(message.senderUser.imageUrl)
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-        Column(
-            horizontalAlignment = if (message.senderUser.uid == "1") Alignment.Start else Alignment.End
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = bubbleColor,
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .widthIn(max = 280.dp)
+                .animateContentSize()
         ) {
-            Text(
-                text = message.senderUser.name,
-                fontWeight = FontWeight.Thin,
-                fontSize = 14.sp,
-                color = Color(0xFF61828A)
-            )
-            Box(
-                modifier = Modifier
-                    .background(
-                        color = if (message.senderUser.uid == "1") Color(0xFFF0F5F5) else Color(
-                            0xFFED822B
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .padding(12.dp)
-            ) {
+            Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text = message.content, fontSize = 16.sp,
-                    color = if (message.senderUser.uid == "1") Color.Black else Color.White,
+                    text = message.content,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = textColor
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = formatMessageDate(message.date),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = textColor.copy(alpha = 0.7f),
+                    modifier = Modifier.align(Alignment.End)
                 )
             }
-            Text(
-                text = message.date,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-        }
-        if (message.senderUser.uid != "1") {
-            Spacer(modifier = Modifier.width(8.dp))
-            UserImage(message.senderUser.imageUrl)
         }
     }
 }
 
 @Composable
-fun UserImage(imageUrl: String) {
-    val painter = rememberAsyncImagePainter(model = imageUrl)
-    val errorImage =
-        rememberAsyncImagePainter(model = "https://avatars.githubusercontent.com/u/185503020?s=200&v=4")
+fun formatMessageDate(dateString: String): String {
+    val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    val date = inputFormat.parse(dateString) ?: return dateString
 
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape) // Resmi dairesel yapmak için
-            .border(1.dp, Color.Gray, CircleShape)
-    ) {
-        if (painter.state is AsyncImagePainter.State.Error) {
-            Image(
-                painter = errorImage,
-                contentDescription = null,
-                modifier = Modifier.matchParentSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Image(
-                painter = painter,
-                contentDescription = null,
-                modifier = Modifier.matchParentSize(),
-                contentScale = ContentScale.Crop
-            )
-        }
+    val calendar = Calendar.getInstance()
+    val today = calendar.time
+    calendar.add(Calendar.DAY_OF_YEAR, -1)
+    val yesterday = calendar.time
+
+    return when {
+        isSameDay(date, today) -> "Today ${SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)}"
+        isSameDay(date, yesterday) -> "Yesterday ${SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)}"
+        else -> SimpleDateFormat("MMM d, HH:mm", Locale.getDefault()).format(date)
     }
 }
 
-
-@Composable
-fun MessageInputBar(onMessageSent: (String) -> Unit) {
-    var messageContent by remember { mutableStateOf("") }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(5.dp)
-            .background(Color(0xFFF1F1F1), shape = RoundedCornerShape(16.dp))
-            .padding(horizontal = 16.dp, vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        TextField(
-            value = messageContent,
-            onValueChange = { messageContent = it },
-            placeholder = {
-                Text(
-                    text = "Type your message...",
-                )
-            },
-            modifier = Modifier
-                .weight(1f)
-                .background(Color.Transparent)
-                .padding(end = 8.dp),
-            maxLines = 1,
-            colors = TextFieldDefaults.textFieldColors(
-                backgroundColor = Color.Transparent,
-                cursorColor = Color.Blue,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-        )
-        IconButton(
-            onClick = {
-                if (messageContent.isNotBlank()) {
-                    onMessageSent(messageContent)
-                    messageContent = ""
-                }
-            },
-            modifier = Modifier.size(36.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.send),
-                contentDescription = "Send Message",
-                tint = Color(0xFF007AFF)
-            )
-        }
-    }
+fun isSameDay(date1: Date, date2: Date): Boolean {
+    val cal1 = Calendar.getInstance().apply { time = date1 }
+    val cal2 = Calendar.getInstance().apply { time = date2 }
+    return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+            cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
 }
-

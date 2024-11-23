@@ -19,7 +19,7 @@ class UserRepositoryImpl @Inject constructor(
 ) : UserRepository {
 
     override fun registerUser(email: String, password: String, name: String): Flow<Result<FirebaseUser?>> = flow {
-        emit(Result.Loading) // Burada Loading durumunu emit ediyoruz.
+        emit(Result.Loading)
         try {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             val user = result.user
@@ -30,10 +30,10 @@ class UserRepositoryImpl @Inject constructor(
                 "name" to name,
                 "password" to password,
                 "email" to email,
-                "imageUrl" to "", // New field
-                "phone" to "",       // New field
-                "foundedItems" to emptyList<LostItem>(), // Initialize empty list
-                "chats" to emptyList<Chat>()              // Initialize empty list
+                "imageUrl" to "",
+                "phone" to "",
+                "foundedItems" to emptyList<LostItem>(),
+                "chats" to emptyList<Chat>()
             )
             //add user to firestore database with all the details
             val db = FirebaseFirestore.getInstance()

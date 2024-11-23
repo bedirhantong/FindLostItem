@@ -110,7 +110,7 @@ fun LostItemsScreen(
                 },
                 actions = {
                     IconButton(onClick = {
-
+                        navController.navigate("messages")
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.dm),

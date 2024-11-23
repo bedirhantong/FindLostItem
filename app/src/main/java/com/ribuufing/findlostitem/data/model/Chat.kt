@@ -4,15 +4,20 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Chat(
-    val id: Int = 0,
-    val messages: List<Message>
+    val id: String = "0",
+    val itemId : String = "0",
+    val senderUserUid: String = "",
+    val receiverUserUid: String = "",
+    val messagesIds: List<String> = emptyList()
 )
 
 @Serializable
 data class Message(
-    val id: Int = 0,
-    val senderUser: User,
-    val receiverUser: User,
-    val content : String = "",
-    val date : String
+    val id: String = "",
+    val itemId : String = "0",
+    val senderUserUid: String = "",
+    val receiverUserUid: String = "",
+    val content: String = "",
+    val date: String = ""
 )
+

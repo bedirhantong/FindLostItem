@@ -11,9 +11,5 @@ class GetLostItemsUseCase @Inject constructor(
     suspend operator fun invoke(): List<LostItem> {
         return repository.getLostItems()
     }
-
-    suspend fun addDummyData() {
-        repository.addDummyData()
-    }
 }
 
