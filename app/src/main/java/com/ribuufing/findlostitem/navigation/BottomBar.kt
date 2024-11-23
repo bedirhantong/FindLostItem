@@ -29,12 +29,15 @@ fun BottomBar(
         BottomNavigationItems.Profile
     )
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val isMapScreen = currentRoute == BottomNavigationItems.MapItem.route
+
     NavigationBar(
         modifier = modifier,
-    ) {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
 
+    ) {
         screens.forEach { screen ->
             NavigationBarItem(
                 modifier = Modifier.size(24.dp),

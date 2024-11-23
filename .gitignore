@@ -13,3 +13,12 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Tüm IDEA ayarlarını dışla
+.idea/
+
+# Ama şu dosyaları dahil et
+!.idea/misc.xml
+!.idea/modules.xml
+!.idea/vcs.xml
+!.idea/gradle.xml

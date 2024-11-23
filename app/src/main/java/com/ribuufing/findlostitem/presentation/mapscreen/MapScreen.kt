@@ -54,6 +54,9 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import android.Manifest
+import androidx.activity.compose.BackHandler
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.ribuufing.findlostitem.navigation.BottomNavigationItems
 import kotlinx.coroutines.launch
 
 
@@ -83,6 +86,12 @@ fun MapScreen(
             Manifest.permission.ACCESS_FINE_LOCATION,
         )
     )
+
+    BackHandler {
+        navController.navigate(BottomNavigationItems.Home.route) {
+            popUpTo(navController.graph.findStartDestination().id)
+        }
+    }
 
     LaunchedEffect(permissionState) {
         if (permissionState.allPermissionsGranted) {
