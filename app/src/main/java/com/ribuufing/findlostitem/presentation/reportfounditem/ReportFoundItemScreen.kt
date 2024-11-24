@@ -1,6 +1,7 @@
 package com.ribuufing.findlostitem.presentation.reportfounditem
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -23,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,13 +42,24 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.*
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polygon
+import com.google.maps.android.compose.rememberCameraPositionState
 import com.ribuufing.findlostitem.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,8 +69,10 @@ fun ReportFoundItemScreen() {
     var message by remember { mutableStateOf("") }
     var foundWhere by remember { mutableStateOf("") }
     var placedWhere by remember { mutableStateOf("") }
-    var images by remember { mutableStateOf<List<String>>(emptyList()) }
     val selectImages = remember { mutableStateListOf<Uri>() }
+    var foundLatLng by remember { mutableStateOf<LatLng?>(null) }
+    var deliverLatLng by remember { mutableStateOf<LatLng?>(null) }
+    var showLocationPickerType by remember { mutableStateOf<LocationPickerType?>(null) }
 
     val galleryLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
@@ -72,21 +85,16 @@ fun ReportFoundItemScreen() {
             TopAppBar(
                 title = { Text("Details of found item") },
                 actions = {
-                    IconButton(onClick = {
-//                        val lostItem = LostItem(
-//                            title = itemName,
-//                            description = message,
-//                            images = images,
-//                            date = "2021-10-10",
-//                            contact = "123456789",
-////                            foundByUser = firebaseAuth.currentUser,
-//                            foundWhere = foundWhere,
-//                            placedWhere = placedWhere,
-//
-//                        )
-                        // onSubmit(lostItem)
-                    }) {
-                        Icon(Icons.Default.Send, contentDescription = "Send")
+                    val isFormValid = itemName.isNotBlank() && message.isNotBlank() &&
+                            foundWhere.isNotBlank() && placedWhere.isNotBlank()
+
+                    IconButton(
+                        enabled = isFormValid,
+                        onClick = {
+                            // Gönderim işlemleri burada yapılabilir
+                        }
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
                     }
                 }
             )
@@ -102,56 +110,30 @@ fun ReportFoundItemScreen() {
                         end = 16.dp
                     )
             ) {
-                OutlinedTextField(
+                CustomTextField(
                     value = itemName,
                     onValueChange = { itemName = it },
-                    label = { androidx.compose.material.Text("Item name") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        backgroundColor = Color(0xFFF2EDE8),
-                        focusedBorderColor = Color(0xFFED822B),
-                        unfocusedBorderColor = Color(0x708B8B8B),
-                        focusedLabelColor = Color(0xFFED822B),
-                        cursorColor = Color(0xFF99704D),
-                        textColor = Color(0xFF99704D)
-                    )
+                    label = "Item name",
+                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) }
                 )
 
                 Spacer(modifier = Modifier.height(5.dp))
 
-                OutlinedTextField(
+                CustomTextField(
                     value = message,
                     onValueChange = { message = it },
-                    label = { androidx.compose.material.Text("Message") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    leadingIcon = { Icon(Icons.Default.MailOutline, contentDescription = null) },
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        backgroundColor = Color(0xFFF2EDE8),
-                        focusedBorderColor = Color(0xFFED822B),
-                        unfocusedBorderColor = Color(0x708B8B8B),
-                        focusedLabelColor = Color(0xFFED822B),
-                        cursorColor = Color(0xFF99704D),
-                        textColor = Color(0xFF99704D)
-                    )
+                    label = "Message",
+                    leadingIcon = { Icon(Icons.Default.MailOutline, contentDescription = null) }
+
+
                 )
 
                 Spacer(modifier = Modifier.height(5.dp))
 
-                OutlinedTextField(
+                CustomTextField(
                     value = foundWhere,
                     onValueChange = { foundWhere = it },
-                    label = { androidx.compose.material.Text("Where did you find it?") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    shape = RoundedCornerShape(10.dp),
+                    label = "Where did you find it?",
                     leadingIcon = {
                         Icon(
                             painter = painterResource(id = R.drawable.from_icon),
@@ -159,43 +141,53 @@ fun ReportFoundItemScreen() {
                             modifier = Modifier.size(16.dp)
                         )
                     },
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        backgroundColor = Color(0xFFF2EDE8),
-                        focusedBorderColor = Color(0xFFED822B),
-                        unfocusedBorderColor = Color(0x708B8B8B),
-                        focusedLabelColor = Color(0xFFED822B),
-                        cursorColor = Color(0xFF99704D),
-                        textColor = Color(0xFF99704D)
-                    )
+                    trailingIcon = {
+                        IconButton(
+                            onClick = { showLocationPickerType = LocationPickerType.FOUND },
+                            modifier = Modifier.background(
+                                if (foundLatLng != null) Color.Green else Color.Gray,
+                                shape = RoundedCornerShape(50)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Choose location",
+                                tint = Color.White
+                            )
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(5.dp))
 
-                OutlinedTextField(
+                CustomTextField(
                     value = placedWhere,
                     onValueChange = { placedWhere = it },
-                    label = { androidx.compose.material.Text("Where did you deliver it?") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    shape = RoundedCornerShape(10.dp),
+                    label = "Where did you deliver it?",
                     leadingIcon = {
                         Icon(
                             painter = painterResource(id = R.drawable.placed_icon),
                             contentDescription = "Placed Location icon",
-                            modifier = Modifier.size(16.dp),
-                            tint = Color(0xFF6E2425)
+                            modifier = Modifier.size(16.dp)
                         )
                     },
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        backgroundColor = Color(0xFFF2EDE8),
-                        focusedBorderColor = Color(0xFFED822B),
-                        unfocusedBorderColor = Color(0x708B8B8B),
-                        focusedLabelColor = Color(0xFFED822B),
-                        cursorColor = Color(0xFF99704D),
-                        textColor = Color(0xFF99704D)
-                    )
+                    trailingIcon = {
+                        IconButton(
+                            onClick = { showLocationPickerType = LocationPickerType.PLACED },
+                            modifier = Modifier.background(
+                                if (deliverLatLng != null) Color.Green else Color.Gray,
+                                shape = RoundedCornerShape(50)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Choose location",
+                                tint = Color.White
+                            )
+                        }
+                    }
                 )
+
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(150.dp),
                     modifier = Modifier
@@ -230,12 +222,6 @@ fun ReportFoundItemScreen() {
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(200.dp)
-                                    .clickable {
-                                        images =
-                                            images
-                                                .toMutableList()
-                                                .apply { add(uri.toString()) }
-                                    }
                             )
                             Icon(
                                 Icons.Default.Close,
@@ -250,7 +236,6 @@ fun ReportFoundItemScreen() {
                                     .padding(4.dp)
                                     .clickable {
                                         selectImages.remove(uri)
-                                        images = selectImages.map { it.toString() }
                                     }
                                     .align(Alignment.TopEnd)
                             )
@@ -258,8 +243,148 @@ fun ReportFoundItemScreen() {
                     }
                 }
             }
+
+            showLocationPickerType?.let { pickerType ->
+                LocationPickerDialog(
+                    onDismiss = { showLocationPickerType = null },
+                    onLocationSelected = { latitude, longitude ->
+                        if (pickerType == LocationPickerType.FOUND) {
+                            foundLatLng = LatLng(latitude, longitude)
+                        } else {
+                            deliverLatLng = LatLng(latitude, longitude)
+                        }
+                        showLocationPickerType = null
+                    },
+                    initialLocation = if (pickerType == LocationPickerType.FOUND) foundLatLng else deliverLatLng
+                )
+            }
         }
     )
 }
+
+@Composable
+fun CustomTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 5.dp),
+        shape = RoundedCornerShape(10.dp),
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            backgroundColor = Color(0xFFF2EDE8),
+            focusedBorderColor = Color(0xFFED822B),
+            unfocusedBorderColor = Color(0x708B8B8B),
+            focusedLabelColor = Color(0xFFED822B),
+            cursorColor = Color(0xFF99704D),
+            textColor = Color(0xFF99704D)
+        )
+    )
+}
+
+@Composable
+fun LocationPickerDialog(
+    onDismiss: () -> Unit,
+    onLocationSelected: (latitude: Double, longitude: Double) -> Unit,
+    initialLocation: LatLng? = null
+) {
+    var selectedLocation by remember { mutableStateOf(initialLocation) }
+
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text("Choose a Location") },
+        text = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp)
+            ) {
+                GoogleMap(
+                    modifier = Modifier.matchParentSize(),
+                    onMapClick = { latLng ->
+                        if (isInsideCampus(latLng)) {
+                            selectedLocation = latLng
+                        } else {
+                            Toast.makeText(context, "This location is outside the campus area and cannot be selected.", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    cameraPositionState = rememberCameraPositionState {
+                        position = CameraPosition.fromLatLngZoom(
+                            selectedLocation ?: LatLng(36.8964124764409, 30.64975069784397),
+                            14f
+                        )
+                    },
+                    properties = MapProperties(
+                        //mapStyleOptions = MapStyleOptions(mapStyle)
+                    )
+                ) {
+                    // Add a green polygon representing the campus area
+                    Polygon(
+                        points = listOf(
+                            LatLng(36.88647221734685, 30.662544051047327),
+                            LatLng(36.9008353387027, 30.66451987103039),
+                            LatLng(36.89975145334323, 30.63405932261706),
+                            LatLng(36.88761602348164, 30.638656677775707),
+                            LatLng(36.88832691917245, 30.655198176170995)
+                        ),
+                        fillColor = Color(0x3300FF00),  // Green fill color with 20% opacity
+                        strokeColor = Color(0xFF00FF00), // Green stroke color
+                        strokeWidth = 2f
+                    )
+
+
+                    selectedLocation?.let {
+                        Marker(
+                            state = MarkerState(position = it),
+                            title = "Selected Location",
+                            snippet = "Lat: ${it.latitude}, Lng: ${it.longitude}"
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    selectedLocation?.let {
+                        onLocationSelected(it.latitude, it.longitude)
+                        onDismiss()
+                    }
+                },
+                enabled = selectedLocation != null
+            ) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            Button(onClick = { onDismiss() }) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+fun isInsideCampus(latLng: LatLng): Boolean {
+    // Check if the selected location is within the new campus bounds
+    return latLng.latitude in 36.88647221734685..36.9008353387027 &&
+            latLng.longitude in 30.63405932261706..30.66451987103039
+}
+
+enum class LocationPickerType {
+    FOUND, PLACED
+}
+
+
 
 
