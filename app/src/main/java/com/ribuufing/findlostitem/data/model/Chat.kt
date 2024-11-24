@@ -2,7 +2,6 @@ package com.ribuufing.findlostitem.data.model
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
-import kotlinx.serialization.Serializable
 
 data class Chat(
     @DocumentId val id: String = "",

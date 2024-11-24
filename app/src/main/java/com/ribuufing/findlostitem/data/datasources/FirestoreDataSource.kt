@@ -1,5 +1,6 @@
 package com.ribuufing.findlostitem.data.datasources
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.ribuufing.findlostitem.data.model.Chat
@@ -17,7 +18,6 @@ import kotlin.math.sqrt
 
 class FirestoreDataSource(private val firestore: FirebaseFirestore) {
 
-    // Kullanıcıya ait tüm sohbetleri çekmek
     fun getChatsForUser(currentUserId: String): Flow<List<Chat>> = callbackFlow {
         val chatQuery = firestore.collection("chats")
             .whereArrayContains("participants", currentUserId)
@@ -28,9 +28,11 @@ class FirestoreDataSource(private val firestore: FirebaseFirestore) {
                 return@addSnapshotListener
             }
 
-            if (snapshot != null) {
+            if (snapshot != null&& !snapshot.isEmpty) {
                 val chats = snapshot.toObjects(Chat::class.java)
                 trySend(chats)
+            }else {
+                Log.d("FirestoreDataSource", "No chats found.")
             }
         }
 
@@ -82,7 +84,7 @@ class FirestoreDataSource(private val firestore: FirebaseFirestore) {
 
         val listener = chatQuery.addSnapshotListener { snapshot, error ->
             if (error != null) {
-                close(error) // Hata durumunda akışı kapat
+                close(error)
                 return@addSnapshotListener
             }
 

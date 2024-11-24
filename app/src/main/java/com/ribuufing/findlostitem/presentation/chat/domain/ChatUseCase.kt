@@ -1,17 +1,14 @@
 package com.ribuufing.findlostitem.presentation.chat.domain
 
-// ChatUseCase.kt
 import com.ribuufing.findlostitem.data.model.Chat
 import com.ribuufing.findlostitem.data.model.Message
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class ChatUseCase @Inject constructor(
     private val chatRepository: ChatRepository
 ) {
 
-    // Kullanıcıya ait sohbetleri almak
     fun getChatsForUser(currentUserId: String): Flow<List<Chat>> {
         return chatRepository.getChatsForUser(currentUserId)
     }

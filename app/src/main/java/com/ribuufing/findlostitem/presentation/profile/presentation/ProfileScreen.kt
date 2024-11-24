@@ -1,8 +1,6 @@
 package com.ribuufing.findlostitem.presentation.profile.presentation
 
 import android.annotation.SuppressLint
-import android.util.Log
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,8 +17,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Scaffold
@@ -46,7 +41,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImagePainter
@@ -89,7 +83,6 @@ fun ProfileScreen(
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
-            // Trigger refresh logic
             viewModel.refreshUserInfos()
             isRefreshing = false
         }
@@ -103,7 +96,7 @@ fun ProfileScreen(
     openDialog.value = !isInternetAvailable
 
     NoInternetScreen(openDialog = openDialog, onRetry = {
-        noInternetViewModel.checkInternetConnection() // Retry checking the connection
+        noInternetViewModel.checkInternetConnection()
     })
 
     Scaffold(
@@ -188,8 +181,6 @@ fun ProfileScreen(
 @Composable
 fun ProfileContent(user: User, foundItems: List<LostItem>) {
     Column(modifier = Modifier.fillMaxSize()) {
-
-        // Arka plan görseli
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -202,8 +193,6 @@ fun ProfileContent(user: User, foundItems: List<LostItem>) {
                 modifier = Modifier.fillMaxSize()
             )
         }
-
-        // Profil içeriği
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
@@ -226,8 +215,6 @@ fun ProfileContent(user: User, foundItems: List<LostItem>) {
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
-
-                // Yükleme durumu
                 if (painterState is AsyncImagePainter.State.Loading) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -236,7 +223,6 @@ fun ProfileContent(user: User, foundItems: List<LostItem>) {
                     )
                 }
 
-                // Hata durumu
                 if (painterState is AsyncImagePainter.State.Error) {
                     Text(
                         text = "X",
@@ -249,7 +235,6 @@ fun ProfileContent(user: User, foundItems: List<LostItem>) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Kullanıcı Bilgileri
             Text(
                 text = user.name,
                 style = MaterialTheme.typography.titleLarge.copy(
@@ -275,7 +260,6 @@ fun ProfileContent(user: User, foundItems: List<LostItem>) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Diğer içerikler
             TabPagerExample(it = PaddingValues(0.dp), foundItems = foundItems)
         }
     }
@@ -288,7 +272,7 @@ fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem>) {
     val tabs = listOf(
         "Found items"
 //        , "Tab 2", "Tab 3"
-    ) // Sekme başlıkları
+    )
     val pagerState = rememberPagerState()
 
     Column(
@@ -296,7 +280,6 @@ fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem>) {
             .fillMaxSize()
             .padding(it)
     ) {
-        // Tab başlıkları
         TabRow(
             indicator = { tabPositions ->
                 TabRowDefaults.Indicator(
@@ -326,7 +309,6 @@ fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem>) {
             }
         )
 
-        // Sayfalar arası geçiş için HorizontalPager
         HorizontalPager(
             count = tabs.size,
             state = pagerState,
@@ -369,9 +351,7 @@ fun LostItemRow(item: LostItem) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Image and text side-by-side
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Image with loading/error states
             val painter = rememberAsyncImagePainter(model = item.images[0])
             val painterState = painter.state
 
@@ -389,7 +369,6 @@ fun LostItemRow(item: LostItem) {
                     contentScale = ContentScale.Crop
                 )
 
-                // Loading indicator
                 if (painterState is AsyncImagePainter.State.Loading) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -398,7 +377,6 @@ fun LostItemRow(item: LostItem) {
                     )
                 }
 
-                // Error indicator
                 if (painterState is AsyncImagePainter.State.Error) {
                     Text(
                         text = "Failed to load",
@@ -409,18 +387,15 @@ fun LostItemRow(item: LostItem) {
                 }
             }
 
-            // Item information column
             Column(
                 verticalArrangement = Arrangement.Center
             ) {
-                // Title
                 Text(
                     text = item.title,
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.Black,
                 )
 
-                // Date
                 Text(
                     text = "Lost on ${item.date}",
                     style = MaterialTheme.typography.bodySmall,
@@ -429,10 +404,8 @@ fun LostItemRow(item: LostItem) {
             }
         }
 
-        // Trash icon
         IconButton(
             onClick = {
-                // Trash button action
             }
         ) {
             Icon(

@@ -16,7 +16,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.ribuufing.findlostitem.presentation.auth.presentation.login.LoginScreen
 import com.ribuufing.findlostitem.presentation.auth.presentation.signup.RegisterScreen
-import com.ribuufing.findlostitem.presentation.directmessages.ChatDetailScreen
+import com.ribuufing.findlostitem.presentation.chatdetail.ChatDetailScreen
 import com.ribuufing.findlostitem.presentation.directmessages.DmChatScreen
 import com.ribuufing.findlostitem.presentation.lostitemdetail.LostItemDetailScreen
 import com.ribuufing.findlostitem.presentation.mapscreen.MapScreen
@@ -64,15 +64,12 @@ fun NavigationGraph(
             val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
             val senderUid = backStackEntry.arguments?.getString("senderUid") ?: return@composable
             val receiverUid = backStackEntry.arguments?.getString("receiverUid") ?: return@composable
-
-            // Alt bar görünürlüğünü kapat
             onBottomBarVisibility(false)
-
-            // ChatScreen'i çağır
             ChatScreen(navController = navController, itemId = itemId, senderUid = senderUid, receiverUid = receiverUid)
         }
 
         composable("dmChatScreen") {
+            onBottomBarVisibility(false)
             DmChatScreen(navController = navController)
         }
 

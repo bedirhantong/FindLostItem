@@ -1,13 +1,11 @@
 package com.ribuufing.findlostitem.di
 
-import com.google.firebase.firestore.FirebaseFirestore
 import com.ribuufing.findlostitem.data.LostItemRepositoryImpl
 import com.ribuufing.findlostitem.domain.repository.LostItemRepository
 import com.ribuufing.findlostitem.presentation.chat.data.ChatRepositoryImpl
 import com.ribuufing.findlostitem.presentation.chat.domain.ChatRepository
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton

@@ -16,7 +16,6 @@ class ChatRepositoryImpl @Inject constructor(
     private val dataSource: FirestoreDataSource
 ) : ChatRepository {
 
-    // Kullanıcıya ait sohbetleri almak
     override fun getChatsForUser(currentUserId: String): Flow<List<Chat>> = callbackFlow {
         val listener = dataSource.getChatsForUser(currentUserId)
             .onEach { chats ->
