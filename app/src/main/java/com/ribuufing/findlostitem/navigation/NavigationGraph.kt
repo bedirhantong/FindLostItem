@@ -38,8 +38,17 @@ fun NavigationGraph(
             LostItemsScreen(navController = navController)
         }
         composable(BottomNavigationItems.AddItem.route) {
-            onBottomBarVisibility(true)
-            ReportFoundItemScreen()
+            onBottomBarVisibility(false)
+            ReportFoundItemScreen(
+                navController = navController,
+                onNavigateToHome = {
+                    navController.navigate(BottomNavigationItems.Home.route) {
+                        popUpTo(BottomNavigationItems.Home.route) {
+                            inclusive = true
+                        }
+                    }
+                }
+            )
         }
         composable(BottomNavigationItems.MapItem.route) {
             onBottomBarVisibility(false)
