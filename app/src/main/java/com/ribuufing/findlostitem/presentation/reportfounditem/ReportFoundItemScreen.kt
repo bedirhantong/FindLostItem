@@ -45,19 +45,23 @@ import coil.compose.rememberAsyncImagePainter
 import androidx.compose.material.*
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavHostController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.Marker
@@ -69,7 +73,11 @@ import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReportFoundItemScreen() {
+fun ReportFoundItemScreen(
+    onNavigateToHome: () -> Unit,
+    navController: NavHostController
+
+) {
     var itemName by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
     var foundWhere by remember { mutableStateOf("") }
@@ -79,31 +87,75 @@ fun ReportFoundItemScreen() {
     var deliverLatLng by remember { mutableStateOf<LatLng?>(null) }
     var showLocationPickerType by remember { mutableStateOf<LocationPickerType?>(null) }
 
+    var sendStatus by remember { mutableStateOf(SendStatus.Idle) }
     val galleryLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
             selectImages.clear()
             selectImages.addAll(uris)
         }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(sendStatus) {
+        when (sendStatus) {
+            SendStatus.Sending -> {
+                snackbarHostState.showSnackbar("Gönderiliyor...")
+
+
+            }
+
+            SendStatus.Success -> {
+                snackbarHostState.showSnackbar("Gönderildi!")
+                onNavigateToHome()
+            }
+
+            SendStatus.Error -> {
+                snackbarHostState.showSnackbar("Gönderim başarısız!")
+            }
+
+
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Details of found item") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                title = { Text("Post item") },
                 actions = {
                     val isFormValid = itemName.isNotBlank() && message.isNotBlank() &&
                             foundWhere.isNotBlank() && placedWhere.isNotBlank() &&
                             deliverLatLng != null && foundLatLng != null && selectImages.isNotEmpty()
 
+
                     IconButton(
                         enabled = isFormValid,
                         onClick = {
-                            sendToFirestore(itemName, message, foundWhere, placedWhere, foundLatLng, deliverLatLng, selectImages)
+                            sendStatus = SendStatus.Sending
+                            sendToFirestoreWithImages(
+                                itemName,
+                                message,
+                                foundWhere,
+                                placedWhere,
+                                foundLatLng,
+                                deliverLatLng,
+                                selectImages
+                            ) { isSuccess ->
+                                sendStatus = if (isSuccess) SendStatus.Success else SendStatus.Error
+                            }
                         }
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
                     }
                 }
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         },
         content = { paddingValues ->
             Column(
@@ -130,8 +182,6 @@ fun ReportFoundItemScreen() {
                     onValueChange = { message = it },
                     label = "Message",
                     leadingIcon = { Icon(Icons.Default.MailOutline, contentDescription = null) }
-
-
                 )
 
                 Spacer(modifier = Modifier.height(5.dp))
@@ -322,7 +372,11 @@ fun LocationPickerDialog(
                         if (isInsideCampus(latLng)) {
                             selectedLocation = latLng
                         } else {
-                            Toast.makeText(context, "This location is outside the campus area and cannot be selected.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "This location is outside the campus area and cannot be selected.",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     },
                     cameraPositionState = rememberCameraPositionState {
@@ -392,58 +446,101 @@ enum class LocationPickerType {
 }
 
 
+enum class SendStatus {
+    Idle,
+    Sending,
+    Success,
+    Error
+}
 
-fun sendToFirestore(
+
+fun uploadImagesToStorage(
+    images: List<Uri>,
+    itemId: String,
+    onUploadComplete: (List<String>) -> Unit,
+    onUploadFailed: (Exception) -> Unit
+) {
+    val storageRef = FirebaseStorage.getInstance().reference
+    val uploadedImageUrls = mutableListOf<String>()
+    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
+
+
+    images.forEachIndexed { index, imageUri ->
+        val imageRef =
+            storageRef.child("images/items-by-user/$userId/$itemId/${itemId}_${index}.jpg")
+
+        imageRef.putFile(imageUri)
+            .addOnSuccessListener {
+                imageRef.downloadUrl.addOnSuccessListener { downloadUri ->
+                    uploadedImageUrls.add(downloadUri.toString())
+
+                    if (uploadedImageUrls.size == images.size) {
+                        onUploadComplete(uploadedImageUrls)
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                onUploadFailed(exception)
+            }
+    }
+}
+
+
+fun sendToFirestoreWithImages(
     itemName: String,
     message: String,
     foundWhere: String,
     placedWhere: String,
     foundLatLng: LatLng?,
     deliverLatLng: LatLng?,
-    images: List<Uri>
+    images: List<Uri>,
+    onComplete: (Boolean) -> Unit // Gönderim tamamlandığında çağrılacak
+
 ) {
-    val db = FirebaseFirestore.getInstance()
+    val itemId = UUID.randomUUID().toString() // Benzersiz itemId oluştur
 
-    // Benzersiz bir id oluştur (UUID kullanabiliriz)
-    val itemId = UUID.randomUUID().toString()
+    uploadImagesToStorage(
+        images,
+        itemId, // Yeni parametre olarak itemId geçiriliyor
+        onUploadComplete = { imageUrls ->
+            val db = FirebaseFirestore.getInstance()
 
-    // Firestore verisi oluştur
-    val data = hashMapOf(
-        "itemId" to itemId, // Benzersiz itemId
-        "senderInfo" to hashMapOf(
-            "senderId" to FirebaseAuth.getInstance().currentUser?.uid,
-            "email" to FirebaseAuth.getInstance().currentUser?.email
-            //TODO: Phone number eklenebilir.
-        ),
-        "timestamp" to FieldValue.serverTimestamp(), // Sunucu timestamp'ı ekliyoruz
-        "itemName" to itemName,
-        "message" to message,
-        "foundWhere" to foundWhere,
-        "placedWhere" to placedWhere,
-        "foundLatLng" to foundLatLng,
-        "deliverLatLng" to deliverLatLng,
-        "images" to images.map { it.toString() }, // Uri'leri String'e dönüştür
-        "is_picked" to false,
-        "numOfDownVotes" to 0,
-        "numOfUpVotes" to 0
+            val data = hashMapOf(
+                "itemId" to itemId,
+                "senderInfo" to hashMapOf(
+                    "senderId" to FirebaseAuth.getInstance().currentUser?.uid,
+                    "email" to FirebaseAuth.getInstance().currentUser?.email
+                ),
+                "timestamp" to FieldValue.serverTimestamp(),
+                "itemName" to itemName,
+                "message" to message,
+                "foundWhere" to foundWhere,
+                "placedWhere" to placedWhere,
+                "foundLatLng" to foundLatLng,
+                "deliverLatLng" to deliverLatLng,
+                "images" to imageUrls, // Resim URL'leri
+                "is_picked" to false,
+                "numOfDownVotes" to 0,
+                "numOfUpVotes" to 0
+            )
+
+            db.collection("found_items_test")
+                .document(itemId)
+                .set(data)
+                .addOnSuccessListener {
+                    onComplete(true)
+                    Log.d("Firestore", "DocumentSnapshot successfully written!")
+                }
+                .addOnFailureListener { e ->
+                    onComplete(false)
+                    Log.d("Firestore", "Error writing document", e)
+                }
+        },
+        onUploadFailed = { exception ->
+            onComplete(false)
+            Log.d("Storage", "Error uploading images", exception)
+        }
     )
-
-    // "found_items" koleksiyonuna veriyi gönder
-    db.collection("found_items_test")
-        .document(itemId) // Belirlediğimiz id ile doküman oluştur
-        .set(data)
-        .addOnSuccessListener {
-            // Gönderim başarılı olduğunda yapılacak işlemler
-            //TODO: Gönderim başarılı olduğunda toast mesajı gösterilebilir
-            Log.d("Firestoree", "DocumentSnapshot successfully written!")
-
-        }
-        .addOnFailureListener { e ->
-            // Hata durumu
-            //Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            //TODO: Hata durumunda toast mesajı gösterilebilir
-            Log.d("Firestoree", "Error writing document", e)
-        }
 }
 
 
