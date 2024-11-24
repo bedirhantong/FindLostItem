@@ -58,6 +58,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.Marker
@@ -97,7 +98,15 @@ fun ReportFoundItemScreen() {
                     IconButton(
                         enabled = isFormValid,
                         onClick = {
-                            sendToFirestore(itemName, message, foundWhere, placedWhere, foundLatLng, deliverLatLng, selectImages)
+                            sendToFirestoreWithImages(
+                                itemName,
+                                message,
+                                foundWhere,
+                                placedWhere,
+                                foundLatLng,
+                                deliverLatLng,
+                                selectImages
+                            )
                         }
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
@@ -393,7 +402,42 @@ enum class LocationPickerType {
 
 
 
-fun sendToFirestore(
+
+fun uploadImagesToStorage(
+    images: List<Uri>,
+    itemId: String,
+    onUploadComplete: (List<String>) -> Unit,
+    onUploadFailed: (Exception) -> Unit
+) {
+    val storageRef = FirebaseStorage.getInstance().reference
+    val uploadedImageUrls = mutableListOf<String>()
+    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
+
+
+    images.forEachIndexed { index, imageUri ->
+        val imageRef = storageRef.child("images/items-by-user/$userId/$itemId/${itemId}_${index}.jpg")
+
+        imageRef.putFile(imageUri)
+            .addOnSuccessListener {
+                imageRef.downloadUrl.addOnSuccessListener { downloadUri ->
+                    uploadedImageUrls.add(downloadUri.toString())
+
+                    if (uploadedImageUrls.size == images.size) {
+                        onUploadComplete(uploadedImageUrls)
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                onUploadFailed(exception)
+            }
+    }
+}
+
+
+
+
+
+fun sendToFirestoreWithImages(
     itemName: String,
     message: String,
     foundWhere: String,
@@ -402,48 +446,47 @@ fun sendToFirestore(
     deliverLatLng: LatLng?,
     images: List<Uri>
 ) {
-    val db = FirebaseFirestore.getInstance()
+    val itemId = UUID.randomUUID().toString() // Benzersiz itemId oluştur
 
-    // Benzersiz bir id oluştur (UUID kullanabiliriz)
-    val itemId = UUID.randomUUID().toString()
+    uploadImagesToStorage(
+        images,
+        itemId, // Yeni parametre olarak itemId geçiriliyor
+        onUploadComplete = { imageUrls ->
+            val db = FirebaseFirestore.getInstance()
 
-    // Firestore verisi oluştur
-    val data = hashMapOf(
-        "itemId" to itemId, // Benzersiz itemId
-        "senderInfo" to hashMapOf(
-            "senderId" to FirebaseAuth.getInstance().currentUser?.uid,
-            "email" to FirebaseAuth.getInstance().currentUser?.email
-            //TODO: Phone number eklenebilir.
-        ),
-        "timestamp" to FieldValue.serverTimestamp(), // Sunucu timestamp'ı ekliyoruz
-        "itemName" to itemName,
-        "message" to message,
-        "foundWhere" to foundWhere,
-        "placedWhere" to placedWhere,
-        "foundLatLng" to foundLatLng,
-        "deliverLatLng" to deliverLatLng,
-        "images" to images.map { it.toString() }, // Uri'leri String'e dönüştür
-        "is_picked" to false,
-        "numOfDownVotes" to 0,
-        "numOfUpVotes" to 0
+            val data = hashMapOf(
+                "itemId" to itemId,
+                "senderInfo" to hashMapOf(
+                    "senderId" to FirebaseAuth.getInstance().currentUser?.uid,
+                    "email" to FirebaseAuth.getInstance().currentUser?.email
+                ),
+                "timestamp" to FieldValue.serverTimestamp(),
+                "itemName" to itemName,
+                "message" to message,
+                "foundWhere" to foundWhere,
+                "placedWhere" to placedWhere,
+                "foundLatLng" to foundLatLng,
+                "deliverLatLng" to deliverLatLng,
+                "images" to imageUrls, // Resim URL'leri
+                "is_picked" to false,
+                "numOfDownVotes" to 0,
+                "numOfUpVotes" to 0
+            )
+
+            db.collection("found_items_test")
+                .document(itemId)
+                .set(data)
+                .addOnSuccessListener {
+                    Log.d("Firestore", "DocumentSnapshot successfully written!")
+                }
+                .addOnFailureListener { e ->
+                    Log.d("Firestore", "Error writing document", e)
+                }
+        },
+        onUploadFailed = { exception ->
+            Log.d("Storage", "Error uploading images", exception)
+        }
     )
-
-    // "found_items" koleksiyonuna veriyi gönder
-    db.collection("found_items_test")
-        .document(itemId) // Belirlediğimiz id ile doküman oluştur
-        .set(data)
-        .addOnSuccessListener {
-            // Gönderim başarılı olduğunda yapılacak işlemler
-            //TODO: Gönderim başarılı olduğunda toast mesajı gösterilebilir
-            Log.d("Firestoree", "DocumentSnapshot successfully written!")
-
-        }
-        .addOnFailureListener { e ->
-            // Hata durumu
-            //Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            //TODO: Hata durumunda toast mesajı gösterilebilir
-            Log.d("Firestoree", "Error writing document", e)
-        }
 }
 
 
