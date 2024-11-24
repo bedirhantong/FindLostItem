@@ -1,9 +1,7 @@
 package com.ribuufing.findlostitem.presentation.profile.presentation
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseUser
 import com.ribuufing.findlostitem.data.model.LostItem
 import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.domain.use_cases.GetCurrentUserUidUseCase

@@ -16,11 +16,9 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.ribuufing.findlostitem.presentation.auth.presentation.login.LoginScreen
 import com.ribuufing.findlostitem.presentation.auth.presentation.signup.RegisterScreen
-import com.ribuufing.findlostitem.presentation.chatdetail.ChatDetailScreen
 import com.ribuufing.findlostitem.presentation.directmessages.DmChatScreen
 import com.ribuufing.findlostitem.presentation.lostitemdetail.LostItemDetailScreen
 import com.ribuufing.findlostitem.presentation.mapscreen.MapScreen
-import com.ribuufing.findlostitem.presentation.messagesfeed.MessagesFeed
 import com.ribuufing.findlostitem.presentation.profile.presentation.ProfileScreen
 import com.ribuufing.findlostitem.presentation.profile.presentation.settings.SettingsScreen
 import com.ribuufing.findlostitem.presentation.reportfounditem.ReportFoundItemScreen
@@ -73,19 +71,6 @@ fun NavigationGraph(
             DmChatScreen(navController = navController)
         }
 
-        composable("chatDetailScreen/{chatId}") { backStackEntry ->
-            val chatId = backStackEntry.arguments?.getString("chatId") ?: return@composable
-            ChatDetailScreen(navController = navController, chatId = chatId)
-        }
-
-        composable(
-            Routes.Messages.route,
-            enterTransition = ::slideInToRight,
-            exitTransition = ::slideOutToRight,
-        ){
-            onBottomBarVisibility(false)
-            MessagesFeed(navController)
-        }
         composable(
             Routes.Signup.route,
             enterTransition = ::slideInToLeft,

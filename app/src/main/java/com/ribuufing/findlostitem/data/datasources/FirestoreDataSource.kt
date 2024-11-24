@@ -109,7 +109,6 @@ class FirestoreDataSource(private val firestore: FirebaseFirestore) {
         awaitClose { listener.remove() }
     }
 
-
     suspend fun fetchLostItems(): List<LostItem> {
         return firestore.collection("lost_items")
             .get()
