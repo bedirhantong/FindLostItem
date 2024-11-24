@@ -85,20 +85,4 @@ class UserRepositoryImpl @Inject constructor(
             emit(Result.Failure(e))
         }
     }
-
-
-//    override fun deleteUser(): Flow<Result<Unit>> = flow {
-//        try {
-//            emit(Result.Loading)
-//            val user = auth.currentUser
-//            if (user != null) {
-//                val result = auth.currentUser?.delete()?.await()
-//                emit(Result.Success(result))
-//            } else {
-//                emit(Result.Failure(Exception("User not logged in")))
-//            }
-//        } catch (e: Exception) {
-//            emit(Result.Failure(e))
-//        }
-//    }
 }

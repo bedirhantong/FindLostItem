@@ -1,6 +1,7 @@
 package com.ribuufing.findlostitem.presentation.directmessages
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,18 +35,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImagePainter
+import coil.compose.rememberAsyncImagePainter
 import com.ribuufing.findlostitem.data.model.Chat
+import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.navigation.Routes
+import com.ribuufing.findlostitem.presentation.profile.presentation.ProfileContent
+import com.ribuufing.findlostitem.utils.Result
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +64,7 @@ fun DmChatScreen(
 ) {
     val chats by viewModel.chats.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState(initial = false)
+    val userInfoState = viewModel.userInfos.collectAsState().value
 
     if (isLoading) {
         CircularProgressIndicator(modifier = Modifier.fillMaxSize().wrapContentSize())
@@ -81,33 +90,44 @@ fun DmChatScreen(
                 contentPadding = paddingValues
             ) {
                 items(chats) { chat ->
-                    ChatItem(chat = chat) {
-                        val user1Id = chat.participants.getOrNull(0)
-                        val user2Id = chat.participants.getOrNull(1)
+                    val currentUser = viewModel.currentUserId
+                    val otherUserId = chat.participants.firstOrNull { it != currentUser }
 
-                        if (user1Id != null && user2Id != null) {
-                            val currentUser = viewModel.currentUserId
-                            val senderUid = if (user1Id == currentUser) user1Id else user2Id
-                            val receiverUid = if (user1Id == currentUser) user2Id else user1Id
-
-                            navController.navigate("${Routes.Chat.route}/${chat.itemId}/$senderUid/$receiverUid")
-                        } else {
-                            Log.e("ChatItem", "Error: Chat does not have 2 participants.")
+                    if (otherUserId != null) {
+                        viewModel.getUserInfosByUid(otherUserId)
+                    }
+                    when (userInfoState) {
+                        is Result.Success -> {
+                            val user = userInfoState.data
+                            if (user != null) {
+                                ChatItem(chat = chat, user = user) {
+                                    navController.navigate("${Routes.Chat.route}/${chat.itemId}/$currentUser/$otherUserId")
+                                }
+                            } else {
+                                Text("No chat data available")
+                            }
+                        }
+                        is Result.Failure -> {
+                            Text("Error: ${userInfoState.exception.localizedMessage}")
+                        }
+                        else -> {
+                            Text("Unknown state")
                         }
                     }
                 }
             }
+
         }
 
     }
 }
 
 @Composable
-fun ChatItem(chat: Chat, onClick: () -> Unit) {
+fun ChatItem(chat: Chat, user: User?, onClick: () -> Unit) {
     val participants = chat.participants
     val participantNames = participants.joinToString(", ")
-    val lastMessagePreview = chat.lastMessage.take(50) // Limit message preview length
-    val timestamp = chat.lastMessageTimestamp.toDate().toString() // Format timestamp as string (you can customize the format)
+    val lastMessagePreview = chat.lastMessage.take(50)
+    val timestamp = chat.lastMessageTimestamp.toDate().toString()
 
     Card(
         modifier = Modifier
@@ -120,34 +140,52 @@ fun ChatItem(chat: Chat, onClick: () -> Unit) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Profile picture placeholder
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(80.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondary)
-                    .border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                    .border(2.dp, Color.White, CircleShape)
+                    .background(Color.Gray)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier.align(Alignment.Center),
-                    tint = MaterialTheme.colorScheme.onSecondary
+                val painter = rememberAsyncImagePainter(model = user?.imageUrl?.ifEmpty { "https://cdn.pixabay.com/photo/2014/03/25/16/24/female-296989_1280.png" })
+                val painterState = painter.state
+                Image(
+                    painter = painter,
+                    contentDescription = "Profile Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
+                if (painterState is AsyncImagePainter.State.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(32.dp)
+                    )
+                }
+
+                if (painterState is AsyncImagePainter.State.Error) {
+                    Text(
+                        text = "X",
+                        color = Color.Red,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Chat details
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
             ) {
-                Text(
-                    text = participantNames,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                if (user != null) {
+                    Text(
+                        text = user.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = lastMessagePreview,
@@ -156,11 +194,12 @@ fun ChatItem(chat: Chat, onClick: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Last message at $timestamp",
+                    text = timestamp,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
         }
     }
 }
