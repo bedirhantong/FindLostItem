@@ -32,8 +32,6 @@ fun BottomBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val isMapScreen = currentRoute == BottomNavigationItems.MapItem.route
-
     NavigationBar(
         modifier = modifier,
 

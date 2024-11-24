@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,15 +59,19 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ribuufing.findlostitem.R
+import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.presentation.nointernet.NoInternetScreen
 import com.ribuufing.findlostitem.presentation.nointernet.NoInternetViewModel
+import com.ribuufing.findlostitem.presentation.profile.presentation.ProfileContent
+import com.ribuufing.findlostitem.utils.Result
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LostItemsScreen(
     noInternetViewModel: NoInternetViewModel = hiltViewModel(),
     viewModel: LostItemsViewModel = hiltViewModel(),
-    navController: NavHostController
+    navController: NavHostController,
 ) {
     val lostItems by viewModel.filteredLostItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -73,6 +79,16 @@ fun LostItemsScreen(
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
     val isInternetAvailable by noInternetViewModel.isInternetAvailable
     val openDialog = remember { mutableStateOf(false) }
+
+    val user = when (val userInfoState = viewModel.userInfos.collectAsState().value) {
+        is Result.Success -> userInfoState.data
+        is Result.Failure -> {
+            // Hata durumu için yapılacak işlemler
+            null
+        }
+        else -> null // Diğer durumlar için de null
+    }
+
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
@@ -110,7 +126,7 @@ fun LostItemsScreen(
                 },
                 actions = {
                     IconButton(onClick = {
-
+                        navController.navigate("dmChatScreen")
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.dm),
@@ -215,7 +231,7 @@ fun LostItemsScreen(
                                         .offset(y = offsetY)
                                 ) {
                                     items(lostItems) { item ->
-                                        LostItemRow(item, viewModel, navController)
+                                        LostItemRow(item, viewModel, navController,user)
                                     }
                                 }
                             }
@@ -227,103 +243,9 @@ fun LostItemsScreen(
     )
 }
 
-
-@Composable
-fun ShimmerEffect(
-    modifier: Modifier,
-    widthOfShadowBrush: Int = 500,
-    angleOfAxisY: Float = 270f,
-    durationMillis: Int = 1000,
-) {
-
-    val shimmerColors = listOf(
-        Color.Gray.copy(alpha = 0.3f),
-        Color.Gray.copy(alpha = 0.5f),
-        Color.Gray.copy(alpha = 1.0f),
-        Color.Gray.copy(alpha = 0.5f),
-        Color.Gray.copy(alpha = 0.3f),
-    )
-
-    val transition = rememberInfiniteTransition(label = "")
-
-    val translateAnimation = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = (durationMillis + widthOfShadowBrush).toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = durationMillis,
-                easing = LinearEasing,
-            ),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "Shimmer loading animation",
-    )
-
-    val brush = Brush.linearGradient(
-        colors = shimmerColors,
-        start = Offset(x = translateAnimation.value - widthOfShadowBrush, y = 0.0f),
-        end = Offset(x = translateAnimation.value, y = angleOfAxisY),
-    )
-
-    // Simulate LostItemRow structure
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(10.dp)
-            .border(BorderStroke(0.1.dp, Color.Gray), shape = MaterialTheme.shapes.small)
-            .padding(16.dp)
-    ) {
-        // Placeholder for the Item Name
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth(0.6f)
-                .height(20.dp)
-                .background(brush)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Placeholder for Location and Date Row
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-                .background(brush)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Placeholder for Description
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(30.dp)
-                .background(brush)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(250.dp)
-                .background(brush)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(30.dp)
-                .background(brush)
-        )
-    }
-}
-
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: NavHostController) {
+fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: NavHostController,user: User?) {
     var upvoteCount by remember { mutableIntStateOf(item.numOfUpVotes) }
     var downvoteCount by remember { mutableIntStateOf(item.numOfDownVotes) }
 
@@ -331,7 +253,10 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                navController.navigate("item_detail/${item.id}")
+                user?.uid?.takeIf { it != item.foundByUser?.uid }?.let {
+                    navController.navigate("item_detail/${item.id}")
+                }
+
             }
             .padding(10.dp)
             .border(
@@ -518,5 +443,99 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
                 )
             }
         }
+    }
+}
+
+
+@Composable
+fun ShimmerEffect(
+    modifier: Modifier,
+    widthOfShadowBrush: Int = 500,
+    angleOfAxisY: Float = 270f,
+    durationMillis: Int = 1000,
+) {
+
+    val shimmerColors = listOf(
+        Color.Gray.copy(alpha = 0.3f),
+        Color.Gray.copy(alpha = 0.5f),
+        Color.Gray.copy(alpha = 1.0f),
+        Color.Gray.copy(alpha = 0.5f),
+        Color.Gray.copy(alpha = 0.3f),
+    )
+
+    val transition = rememberInfiniteTransition(label = "")
+
+    val translateAnimation = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = (durationMillis + widthOfShadowBrush).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = durationMillis,
+                easing = LinearEasing,
+            ),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "Shimmer loading animation",
+    )
+
+    val brush = Brush.linearGradient(
+        colors = shimmerColors,
+        start = Offset(x = translateAnimation.value - widthOfShadowBrush, y = 0.0f),
+        end = Offset(x = translateAnimation.value, y = angleOfAxisY),
+    )
+
+    // Simulate LostItemRow structure
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(10.dp)
+            .border(BorderStroke(0.1.dp, Color.Gray), shape = MaterialTheme.shapes.small)
+            .padding(16.dp)
+    ) {
+        // Placeholder for the Item Name
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth(0.6f)
+                .height(20.dp)
+                .background(brush)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Placeholder for Location and Date Row
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .background(brush)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Placeholder for Description
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(30.dp)
+                .background(brush)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp)
+                .background(brush)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(30.dp)
+                .background(brush)
+        )
     }
 }

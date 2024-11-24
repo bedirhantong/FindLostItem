@@ -1,9 +1,8 @@
 package com.ribuufing.findlostitem.presentation.profile.presentation
 
 import android.annotation.SuppressLint
-import android.util.Log
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,9 +17,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Scaffold
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,7 +41,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImagePainter
@@ -87,7 +83,6 @@ fun ProfileScreen(
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
-            // Trigger refresh logic
             viewModel.refreshUserInfos()
             isRefreshing = false
         }
@@ -101,7 +96,7 @@ fun ProfileScreen(
     openDialog.value = !isInternetAvailable
 
     NoInternetScreen(openDialog = openDialog, onRetry = {
-        noInternetViewModel.checkInternetConnection() // Retry checking the connection
+        noInternetViewModel.checkInternetConnection()
     })
 
     Scaffold(
@@ -185,90 +180,91 @@ fun ProfileScreen(
 
 @Composable
 fun ProfileContent(user: User, foundItems: List<LostItem>) {
-    // Display the user information on the screen
-    Column(modifier = Modifier.padding(16.dp)) {
-        // Display the user's profile image
-        val painter = rememberAsyncImagePainter(model = user.imageUrl.ifEmpty { "https://cdn.pixabay.com/photo/2014/03/25/16/24/female-296989_1280.png" })
-        val painterState = painter.state
-
-        Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+        ) {
             Image(
-                painter = painter,
-                contentDescription = "Profile Image",
+                painter = rememberAsyncImagePainter(model =  "https://webis.akdeniz.edu.tr/uploads/1167/slider/5a106276-13d5-42e4-ace4-b335f5c3b946.png"),
+                contentDescription = "Background Image",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .offset(y = (-40).dp)
+        ) {
+            // Profil Fotoğrafı
+            Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(MaterialTheme.shapes.medium),
-                contentScale = ContentScale.Fit
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, Color.White, CircleShape)
+                    .background(Color.Gray)
+                    .align(Alignment.Start)
+            ) {
+                val painter = rememberAsyncImagePainter(model = user.imageUrl.ifEmpty { "https://cdn.pixabay.com/photo/2014/03/25/16/24/female-296989_1280.png" })
+                val painterState = painter.state
+                Image(
+                    painter = painter,
+                    contentDescription = "Profile Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                if (painterState is AsyncImagePainter.State.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(32.dp)
+                    )
+                }
+
+                if (painterState is AsyncImagePainter.State.Error) {
+                    Text(
+                        text = "X",
+                        color = Color.Red,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = user.name,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.onBackground
             )
 
-            // Loading and error states for image
-            if (painterState is AsyncImagePainter.State.Loading) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(32.dp)
-                )
-            }
+            Text(
+                text = "@${user.name}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            )
 
-            if (painterState is AsyncImagePainter.State.Error) {
-                Text(
-                    text = "Failed to load image.",
-                    color = Color.Red,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "@cse.akdeniz.edu.tr",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TabPagerExample(it = PaddingValues(0.dp), foundItems = foundItems)
         }
-
-        // User details
-        Text(
-            text = "Name: ${user.name}",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold
-            ),
-            color = MaterialTheme.colorScheme.secondary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Email: ${user.email}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Phone: ${user.phone.ifEmpty { "Not provided" }}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "UID: ${user.uid}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (user.foundedItems.isNotEmpty()) {
-            Text("Founded Items: ${user.foundedItems}")
-        }
-
-        if (user.chats.isNotEmpty()) {
-            Text("Chats: ${user.chats.size}")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TabPagerExample(it = PaddingValues(0.dp), foundItems =  foundItems)
-
-
     }
 }
+
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
@@ -276,7 +272,7 @@ fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem>) {
     val tabs = listOf(
         "Found items"
 //        , "Tab 2", "Tab 3"
-    ) // Sekme başlıkları
+    )
     val pagerState = rememberPagerState()
 
     Column(
@@ -284,7 +280,6 @@ fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem>) {
             .fillMaxSize()
             .padding(it)
     ) {
-        // Tab başlıkları
         TabRow(
             indicator = { tabPositions ->
                 TabRowDefaults.Indicator(
@@ -314,7 +309,6 @@ fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem>) {
             }
         )
 
-        // Sayfalar arası geçiş için HorizontalPager
         HorizontalPager(
             count = tabs.size,
             state = pagerState,
@@ -357,9 +351,7 @@ fun LostItemRow(item: LostItem) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Image and text side-by-side
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Image with loading/error states
             val painter = rememberAsyncImagePainter(model = item.images[0])
             val painterState = painter.state
 
@@ -377,7 +369,6 @@ fun LostItemRow(item: LostItem) {
                     contentScale = ContentScale.Crop
                 )
 
-                // Loading indicator
                 if (painterState is AsyncImagePainter.State.Loading) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -386,7 +377,6 @@ fun LostItemRow(item: LostItem) {
                     )
                 }
 
-                // Error indicator
                 if (painterState is AsyncImagePainter.State.Error) {
                     Text(
                         text = "Failed to load",
@@ -397,18 +387,15 @@ fun LostItemRow(item: LostItem) {
                 }
             }
 
-            // Item information column
             Column(
                 verticalArrangement = Arrangement.Center
             ) {
-                // Title
                 Text(
                     text = item.title,
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.Black,
                 )
 
-                // Date
                 Text(
                     text = "Lost on ${item.date}",
                     style = MaterialTheme.typography.bodySmall,
@@ -417,10 +404,8 @@ fun LostItemRow(item: LostItem) {
             }
         }
 
-        // Trash icon
         IconButton(
             onClick = {
-                // Trash button action
             }
         ) {
             Icon(

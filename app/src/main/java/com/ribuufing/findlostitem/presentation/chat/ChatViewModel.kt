@@ -2,72 +2,68 @@ package com.ribuufing.findlostitem.presentation.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ribuufing.findlostitem.data.model.LostItem
+import com.ribuufing.findlostitem.data.model.Chat
 import com.ribuufing.findlostitem.data.model.Message
-import com.ribuufing.findlostitem.data.model.User
-import com.ribuufing.findlostitem.domain.use_cases.GetLostItemByIdUseCase
+import com.ribuufing.findlostitem.presentation.chat.domain.ChatUseCase
+import com.ribuufing.findlostitem.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val getLostItemByIdUseCase: GetLostItemByIdUseCase
+    private val chatUseCase: ChatUseCase
 ) : ViewModel() {
 
-    private val _messages = MutableStateFlow<List<Message>>(emptyList())
-    val messages: StateFlow<List<Message>> = _messages
+    private val _chatState = MutableStateFlow<Result<Chat>>(Result.Loading)
+    val chatState: StateFlow<Result<Chat>> = _chatState
 
-    private val _lostItem = MutableStateFlow<LostItem?>(null)
-    val lostItem: StateFlow<LostItem?> = _lostItem
+    private val _messagesState = MutableStateFlow<Result<List<Message>>>(Result.Loading)
+    val messagesState: StateFlow<Result<List<Message>>> = _messagesState
 
-    // Yeni mesaj ekleme fonksiyonu
-    fun addMessage(message: Message) {
+    private var currentChatId: String? = null
+
+    fun createOrGetChat(itemId: String, currentUserId: String, otherUserId: String) {
         viewModelScope.launch {
-            _messages.update { currentMessages ->
-                currentMessages + message // Eski mesajların sonuna ekle
-            }
-        }
-    }
-
-    fun getLostItemById(itemId: String) {
-        viewModelScope.launch {
-            try {
-                getLostItemByIdUseCase(itemId).collect { item ->
-                    _lostItem.value = item
+            chatUseCase.getOrCreateChat(itemId, currentUserId, otherUserId)
+                .onStart { _chatState.value = Result.Loading }
+                .catch { exception -> _chatState.value = Result.Failure(exception) }
+                .collect { chat ->
+                    _chatState.value = Result.Success(chat)
+                    currentChatId = chat.id
+                    getMessages(chat.id)
                 }
-            } catch (e: Exception) {
-                // Handle the error, log, or display a message to the user if necessary
-                _lostItem.value = null
-            } finally {
+        }
+    }
+
+    fun sendMessage(senderId: String, content: String) {
+        viewModelScope.launch {
+            val chatId = currentChatId
+            if (chatId != null) {
+                try {
+                    chatUseCase.sendMessage(chatId, senderId, content)
+                    getMessages(chatId)
+                } catch (exception: Throwable) {
+                    _messagesState.value = Result.Failure(exception)
+                }
+            } else {
+                _messagesState.value = Result.Failure(IllegalStateException("Chat ID is null"))
             }
         }
     }
 
-    // Dummy veri eklemek için (test amaçlı)
-    fun addDummyData() {
+    private fun getMessages(chatId: String) {
         viewModelScope.launch {
-            _messages.update {
-                listOf(
-                    Message(
-                        id = 1,
-                        senderUser = User("1", "İbrahim Serhan Baymaz", imageUrl = "https://avatars.githubusercontent.com/u/102352030?v=4"),
-                        receiverUser = User("2", "Bedirhan Tong", imageUrl = "https://avatars.githubusercontent.com/u/70720131?v=4"),
-                        content = "Hi, you found my laptop. Can we meet?",
-                        date = "1/15 at 2pm"
-                    ),
-                    Message(
-                        id = 2,
-                        senderUser = User("2", "Bedirhan Tong", imageUrl = "https://avatars.githubusercontent.com/u/70720131?v=4"),
-                        receiverUser = User("1", "İbrahim Serhan Baymaz", imageUrl = "https://avatars.githubusercontent.com/u/102352030?v=4"),
-                        content = "I have a course now, let's meet at 4pm.",
-                        date = "1/15 at 2:10pm"
-                    )
-                )
-            }
+            chatUseCase.getChatMessages(chatId)
+                .onStart { _messagesState.value = Result.Loading }
+                .catch { exception -> _messagesState.value = Result.Failure(exception) }
+                .collect { messages ->
+                    _messagesState.value = Result.Success(messages)
+                }
         }
     }
 }

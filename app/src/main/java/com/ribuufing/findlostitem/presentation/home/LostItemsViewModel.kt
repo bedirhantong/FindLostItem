@@ -13,6 +13,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.compose.runtime.State
+import com.ribuufing.findlostitem.data.model.User
+import com.ribuufing.findlostitem.domain.use_cases.GetCurrentUserUidUseCase
+import com.ribuufing.findlostitem.domain.use_cases.GetUserInfosByUidUseCase
+import com.ribuufing.findlostitem.utils.Result
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -21,16 +25,20 @@ import kotlinx.coroutines.flow.stateIn
 class LostItemsViewModel @Inject constructor(
     private val getLostItemsUseCase: GetLostItemsUseCase,
     private val upVoteItemUseCase: UpVoteItemUseCase,
-    private val downVoteItemUseCase: DownVoteItemUseCase
+    private val downVoteItemUseCase: DownVoteItemUseCase,
+    private val getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
+    private val getUserInfosByUidUseCase: GetUserInfosByUidUseCase,
 ) : ViewModel() {
     private val _lostItems = MutableStateFlow<List<LostItem>>(emptyList())
-    val lostItems: StateFlow<List<LostItem>> = _lostItems
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
+
+    private val _userInfos = MutableStateFlow<Result<User?>>(Result.Loading)
+    val userInfos: StateFlow<Result<User?>> = _userInfos
 
     val filteredLostItems: StateFlow<List<LostItem>> =
         combine(_lostItems, _searchQuery) { items, query ->
@@ -39,6 +47,7 @@ class LostItemsViewModel @Inject constructor(
 
     init {
         fetchLostItems()
+        getUserInfosByUid()
     }
 
     private fun fetchLostItems() {
@@ -46,6 +55,27 @@ class LostItemsViewModel @Inject constructor(
             _isLoading.value = true
             _lostItems.value = getLostItemsUseCase.invoke()
             _isLoading.value = false
+        }
+    }
+
+    private fun getCurrentUserUid(): String {
+        return getCurrentUserUidUseCase.invoke()
+    }
+
+    private fun getUserInfosByUid() {
+        val uid = getCurrentUserUid()
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                getUserInfosByUidUseCase(uid).collect { result ->
+                    _userInfos.value = result
+                }
+            } catch (e: Exception) {
+                _userInfos.value = Result.Failure(e)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
@@ -74,12 +104,6 @@ class LostItemsViewModel @Inject constructor(
 
     fun refreshLostItems() {
         fetchLostItems()
-    }
-
-    private fun addDummyData() {
-        viewModelScope.launch {
-            getLostItemsUseCase.addDummyData()
-        }
     }
 }
 
