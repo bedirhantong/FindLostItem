@@ -1,6 +1,7 @@
 package com.ribuufing.findlostitem.presentation.reportfounditem
 
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -54,6 +55,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.Marker
@@ -61,6 +65,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.ribuufing.findlostitem.R
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,12 +91,13 @@ fun ReportFoundItemScreen() {
                 title = { Text("Details of found item") },
                 actions = {
                     val isFormValid = itemName.isNotBlank() && message.isNotBlank() &&
-                            foundWhere.isNotBlank() && placedWhere.isNotBlank()
+                            foundWhere.isNotBlank() && placedWhere.isNotBlank() &&
+                            deliverLatLng != null && foundLatLng != null && selectImages.isNotEmpty()
 
                     IconButton(
                         enabled = isFormValid,
                         onClick = {
-                            // Gönderim işlemleri burada yapılabilir
+                            sendToFirestore(itemName, message, foundWhere, placedWhere, foundLatLng, deliverLatLng, selectImages)
                         }
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
@@ -384,6 +390,62 @@ fun isInsideCampus(latLng: LatLng): Boolean {
 enum class LocationPickerType {
     FOUND, PLACED
 }
+
+
+
+fun sendToFirestore(
+    itemName: String,
+    message: String,
+    foundWhere: String,
+    placedWhere: String,
+    foundLatLng: LatLng?,
+    deliverLatLng: LatLng?,
+    images: List<Uri>
+) {
+    val db = FirebaseFirestore.getInstance()
+
+    // Benzersiz bir id oluştur (UUID kullanabiliriz)
+    val itemId = UUID.randomUUID().toString()
+
+    // Firestore verisi oluştur
+    val data = hashMapOf(
+        "itemId" to itemId, // Benzersiz itemId
+        "senderInfo" to hashMapOf(
+            "senderId" to FirebaseAuth.getInstance().currentUser?.uid,
+            "email" to FirebaseAuth.getInstance().currentUser?.email
+            //TODO: Phone number eklenebilir.
+        ),
+        "timestamp" to FieldValue.serverTimestamp(), // Sunucu timestamp'ı ekliyoruz
+        "itemName" to itemName,
+        "message" to message,
+        "foundWhere" to foundWhere,
+        "placedWhere" to placedWhere,
+        "foundLatLng" to foundLatLng,
+        "deliverLatLng" to deliverLatLng,
+        "images" to images.map { it.toString() }, // Uri'leri String'e dönüştür
+        "is_picked" to false,
+        "numOfDownVotes" to 0,
+        "numOfUpVotes" to 0
+    )
+
+    // "found_items" koleksiyonuna veriyi gönder
+    db.collection("found_items_test")
+        .document(itemId) // Belirlediğimiz id ile doküman oluştur
+        .set(data)
+        .addOnSuccessListener {
+            // Gönderim başarılı olduğunda yapılacak işlemler
+            //TODO: Gönderim başarılı olduğunda toast mesajı gösterilebilir
+            Log.d("Firestoree", "DocumentSnapshot successfully written!")
+
+        }
+        .addOnFailureListener { e ->
+            // Hata durumu
+            //Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            //TODO: Hata durumunda toast mesajı gösterilebilir
+            Log.d("Firestoree", "Error writing document", e)
+        }
+}
+
 
 
 
