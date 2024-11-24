@@ -1,13 +1,9 @@
 package com.ribuufing.findlostitem.presentation.messagesfeed
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ribuufing.findlostitem.data.model.Chat
-import com.ribuufing.findlostitem.data.model.Message
 import com.ribuufing.findlostitem.data.model.User
-import com.ribuufing.findlostitem.domain.use_cases.ChatUseCase
-import com.ribuufing.findlostitem.domain.use_cases.GetAllChatByUserId
 import com.ribuufing.findlostitem.domain.use_cases.GetAllChatsForUserUseCase
 import com.ribuufing.findlostitem.domain.use_cases.GetCurrentUserUidUseCase
 import com.ribuufing.findlostitem.domain.use_cases.GetUserInfosByUidUseCase
@@ -60,21 +56,22 @@ class MessagesFeedViewModel @Inject constructor(
 
     private fun loadUserInfos(chats: List<Chat>) {
         viewModelScope.launch {
-            val userUids = chats.flatMap { listOf(it.senderUserUid, it.receiverUserUid) }.distinct()
-            userUids.forEach { uid ->
-                getUserInfosByUidUseCase(uid).collect { result ->
-                    _userInfos.update { currentMap ->
-                        currentMap + (uid to result)
-                    }
-                }
-            }
+//            val userUids = chats.flatMap { listOf(it.user1Id, it.user2Id) }.distinct()
+//            userUids.forEach { uid ->
+//                getUserInfosByUidUseCase(uid).collect { result ->
+//                    _userInfos.update { currentMap ->
+//                        currentMap + (uid to result)
+//                    }
+//                }
+//            }
             _isLoading.value = false
         }
     }
 
     fun getOtherUserUid(chat: Chat): String {
-        val currentUserUid = getCurrentUserUidUseCase()
-        return if (chat.senderUserUid == currentUserUid) chat.receiverUserUid else chat.senderUserUid
+//        val currentUserUid = getCurrentUserUidUseCase()
+//        return if (chat.user1Id == currentUserUid) chat.user2Id else chat.user1Id
+        return  ""
     }
 }
 

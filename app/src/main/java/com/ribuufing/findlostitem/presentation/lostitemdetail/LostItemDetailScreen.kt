@@ -47,30 +47,25 @@ fun LostItemDetailScreen(
 
     val isLoading by viewModel.isLoading.collectAsState()
     val lostItem by viewModel.lostItem.collectAsState()
+    val currentUserUid by viewModel.currentUserUid.collectAsState()
 
     val pagerState = rememberPagerState()
 
-    Scaffold (
+    Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                },
+                title = { Text("Item Details", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
-                    androidx.compose.material.IconButton(onClick = { navController.popBackStack() }) {
-                        androidx.compose.material.Icon(
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
                             painter = painterResource(id = R.drawable.back),
                             contentDescription = "Back",
                             modifier = Modifier.size(24.dp)
                         )
                     }
-                },
-//                scrollBehavior = scrollBehavior
+                }
             )
+
         },
         content = { paddingValues ->
             if (isLoading) {
@@ -81,7 +76,7 @@ fun LostItemDetailScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                lostItem?.let { item -> // Ensure lostItem is not null before accessing properties
+                lostItem?.let { item ->
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -99,35 +94,28 @@ fun LostItemDetailScreen(
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
 
+                        // Place details
                         Column(modifier = Modifier.padding(bottom = 8.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Place,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                Icon(imageVector = Icons.Default.Place, contentDescription = null)
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(text = item.foundWhere.toString(), style = MaterialTheme.typography.bodySmall)
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                Icon(imageVector = Icons.Default.Star, contentDescription = null)
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(text = item.placedWhere.toString(), style = MaterialTheme.typography.bodySmall)
                             }
                         }
 
-                        // Date and Time
+                        // Date
                         Text(
                             text = item.date,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
 
+                        // Image slider
                         if (item.images.isNotEmpty()) {
                             HorizontalPager(
                                 count = item.images.size,
@@ -144,35 +132,9 @@ fun LostItemDetailScreen(
                                     contentScale = ContentScale.Crop
                                 )
                             }
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier
-                                    .padding(vertical = 8.dp)
-                                    .fillMaxWidth()
-                            ) {
-                                repeat(item.images.size) { index ->
-                                    val color = if (index == pagerState.currentPage) Color.Black else Color.Gray
-                                    Box(
-                                        modifier = Modifier
-                                            .size(8.dp)
-                                            .clip(CircleShape)
-                                            .background(color)
-                                            .padding(2.dp)
-                                    )
-                                    if (index < item.images.size - 1) {
-                                        Spacer(modifier = Modifier.width(4.dp)
-                                        )
-                                    }
-                                }
-                            }
                         }
 
-                        Text(
-                            text = item.description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-
+                        // Buttons
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -181,17 +143,16 @@ fun LostItemDetailScreen(
                         ) {
                             Button(
                                 onClick = {
-                                    Log.d("LostItemDetail","${item.foundByUser?.uid ?: -1 }")
                                     val receiverUid = item.foundByUser?.uid ?: return@Button
-                                    navController.navigate("chat/$itemId/$receiverUid")
+                                    currentUserUid?.let { senderUid ->
+                                        navController.navigate("${Routes.Chat.route}/${item.id}/$senderUid/$receiverUid")
+                                    }
                                 }
-
                             ) {
                                 Text("Message", color = Color.White)
                             }
-                            Spacer(modifier = Modifier.width(8.dp))
                             OutlinedButton(
-                                onClick = { /* Open dialer with item's contact number */ },
+                                onClick = { /* Dial item contact number */ },
                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFC8C03))
                             ) {
                                 Text("Call")
@@ -199,7 +160,6 @@ fun LostItemDetailScreen(
                         }
                     }
                 } ?: run {
-                    // Show a placeholder or error message if lostItem is null
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -211,4 +171,5 @@ fun LostItemDetailScreen(
         }
     )
 }
+
 

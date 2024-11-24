@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Scaffold
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -185,90 +187,100 @@ fun ProfileScreen(
 
 @Composable
 fun ProfileContent(user: User, foundItems: List<LostItem>) {
-    // Display the user information on the screen
-    Column(modifier = Modifier.padding(16.dp)) {
-        // Display the user's profile image
-        val painter = rememberAsyncImagePainter(model = user.imageUrl.ifEmpty { "https://cdn.pixabay.com/photo/2014/03/25/16/24/female-296989_1280.png" })
-        val painterState = painter.state
+    Column(modifier = Modifier.fillMaxSize()) {
 
-        Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+        // Arka plan görseli
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+        ) {
             Image(
-                painter = painter,
-                contentDescription = "Profile Image",
+                painter = rememberAsyncImagePainter(model =  "https://webis.akdeniz.edu.tr/uploads/1167/slider/5a106276-13d5-42e4-ace4-b335f5c3b946.png"),
+                contentDescription = "Background Image",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Profil içeriği
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .offset(y = (-40).dp)
+        ) {
+            // Profil Fotoğrafı
+            Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(MaterialTheme.shapes.medium),
-                contentScale = ContentScale.Fit
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, Color.White, CircleShape)
+                    .background(Color.Gray)
+                    .align(Alignment.Start)
+            ) {
+                val painter = rememberAsyncImagePainter(model = user.imageUrl.ifEmpty { "https://cdn.pixabay.com/photo/2014/03/25/16/24/female-296989_1280.png" })
+                val painterState = painter.state
+                Image(
+                    painter = painter,
+                    contentDescription = "Profile Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Yükleme durumu
+                if (painterState is AsyncImagePainter.State.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(32.dp)
+                    )
+                }
+
+                // Hata durumu
+                if (painterState is AsyncImagePainter.State.Error) {
+                    Text(
+                        text = "X",
+                        color = Color.Red,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Kullanıcı Bilgileri
+            Text(
+                text = user.name,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.onBackground
             )
 
-            // Loading and error states for image
-            if (painterState is AsyncImagePainter.State.Loading) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(32.dp)
-                )
-            }
+            Text(
+                text = "@${user.name}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            )
 
-            if (painterState is AsyncImagePainter.State.Error) {
-                Text(
-                    text = "Failed to load image.",
-                    color = Color.Red,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "@cse.akdeniz.edu.tr",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Diğer içerikler
+            TabPagerExample(it = PaddingValues(0.dp), foundItems = foundItems)
         }
-
-        // User details
-        Text(
-            text = "Name: ${user.name}",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold
-            ),
-            color = MaterialTheme.colorScheme.secondary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Email: ${user.email}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Phone: ${user.phone.ifEmpty { "Not provided" }}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "UID: ${user.uid}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (user.foundedItems.isNotEmpty()) {
-            Text("Founded Items: ${user.foundedItems}")
-        }
-
-        if (user.chats.isNotEmpty()) {
-            Text("Chats: ${user.chats.size}")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TabPagerExample(it = PaddingValues(0.dp), foundItems =  foundItems)
-
-
     }
 }
+
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable

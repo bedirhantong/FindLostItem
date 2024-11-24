@@ -37,57 +37,32 @@ class LostItemRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getAllChatByUserUid(userUid: String): List<Chat> {
-        return dataSource.getAllChatByUserUid(userUid)
+        TODO("Not yet implemented")
     }
 
     override suspend fun getChatByChatId(chatId: String): Result<Chat?> {
-        return try {
-            val chat = dataSource.getChatByChatId(chatId) // Firestore'dan veri çekiliyor
-            Result.Success(chat)
-        } catch (e: Exception) {
-            Result.Failure(e)
-        }
+        TODO("Not yet implemented")
     }
 
-
-    override suspend fun createChat(senderUid: String, receiverUid: String): Result<Chat> = withContext(Dispatchers.IO) {
-        try {
-            val chat = dataSource.createChat(senderUid, receiverUid)
-            Result.Success(chat)
-        } catch (e: Exception) {
-            Result.Failure(e)
-        }
+    override suspend fun createChat(senderUid: String, receiverUid: String): Result<Chat> {
+        TODO("Not yet implemented")
     }
 
-    override suspend fun sendMessageToChat(chatId: String, message: Message): Result<Boolean> = withContext(Dispatchers.IO) {
-        try {
-            val isSuccessful = dataSource.addMessageToChat(chatId, message)
-            Result.Success(isSuccessful)
-        } catch (e: Exception) {
-            Result.Failure(e)
-        }
+    override suspend fun sendMessageToChat(chatId: String, message: Message): Result<Boolean> {
+        TODO("Not yet implemented")
     }
 
-    override suspend fun getChat(senderUid: String, receiverUid: String): Result<Chat?> = withContext(Dispatchers.IO) {
-        try {
-            val chat = dataSource.getChat(senderUid, receiverUid)
-            Result.Success(chat)
-        } catch (e: Exception) {
-            Result.Failure(e)
-        }
+    override suspend fun getChat(senderUid: String, receiverUid: String): Result<Chat?> {
+        TODO("Not yet implemented")
     }
 
-    override suspend fun getMessages(chatId: String): Result<List<Message>> = withContext(Dispatchers.IO) {
-        try {
-            val messages = dataSource.getMessagesForChat(chatId)
-            Result.Success(messages)
-        } catch (e: Exception) {
-            Result.Failure(e)
-        }
+    override suspend fun getMessages(chatId: String): Result<List<Message>> {
+        TODO("Not yet implemented")
     }
 
-    override suspend fun getAllChatsForUser(userUid: String): List<Chat> = withContext(Dispatchers.IO) {
-        dataSource.getAllChatsForUser(userUid)
+    override suspend fun getAllChatsForUser(userUid: String): List<Chat> {
+        TODO("Not yet implemented")
     }
+
 
 }

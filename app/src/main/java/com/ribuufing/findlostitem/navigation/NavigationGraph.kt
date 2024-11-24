@@ -16,6 +16,8 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.ribuufing.findlostitem.presentation.auth.presentation.login.LoginScreen
 import com.ribuufing.findlostitem.presentation.auth.presentation.signup.RegisterScreen
+import com.ribuufing.findlostitem.presentation.directmessages.ChatDetailScreen
+import com.ribuufing.findlostitem.presentation.directmessages.DmChatScreen
 import com.ribuufing.findlostitem.presentation.lostitemdetail.LostItemDetailScreen
 import com.ribuufing.findlostitem.presentation.mapscreen.MapScreen
 import com.ribuufing.findlostitem.presentation.messagesfeed.MessagesFeed
@@ -51,15 +53,32 @@ fun NavigationGraph(
             ProfileScreen(navController = navController)
         }
         composable(
-            Routes.Chat.route,
-            enterTransition = ::slideInToRight,
-            exitTransition = ::slideOutToRight,
-            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
+            route = "${Routes.Chat.route}/{itemId}/{senderUid}/{receiverUid}",
+            arguments = listOf(
+                navArgument("itemId") { type = NavType.StringType },
+                navArgument("senderUid") { type = NavType.StringType },
+                navArgument("receiverUid") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
+            // Parametreleri al
             val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
-            val receiverId = backStackEntry.arguments?.getString("receiverId") ?: return@composable
+            val senderUid = backStackEntry.arguments?.getString("senderUid") ?: return@composable
+            val receiverUid = backStackEntry.arguments?.getString("receiverUid") ?: return@composable
+
+            // Alt bar görünürlüğünü kapat
             onBottomBarVisibility(false)
-            ChatScreen(receiverId)
+
+            // ChatScreen'i çağır
+            ChatScreen(navController = navController, itemId = itemId, senderUid = senderUid, receiverUid = receiverUid)
+        }
+
+        composable("dmChatScreen") {
+            DmChatScreen(navController = navController)
+        }
+
+        composable("chatDetailScreen/{chatId}") { backStackEntry ->
+            val chatId = backStackEntry.arguments?.getString("chatId") ?: return@composable
+            ChatDetailScreen(navController = navController, chatId = chatId)
         }
 
         composable(

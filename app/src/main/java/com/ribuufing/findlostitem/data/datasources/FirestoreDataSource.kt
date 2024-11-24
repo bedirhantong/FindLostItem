@@ -1,13 +1,14 @@
 package com.ribuufing.findlostitem.data.datasources
 
-import android.util.Log
-import com.google.firebase.firestore.FieldPath
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.ribuufing.findlostitem.data.model.Chat
 import com.ribuufing.findlostitem.data.model.Location
 import com.ribuufing.findlostitem.data.model.LostItem
 import com.ribuufing.findlostitem.data.model.Message
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -16,105 +17,96 @@ import kotlin.math.sqrt
 
 class FirestoreDataSource(private val firestore: FirebaseFirestore) {
 
-    suspend fun getAllChatsForUser(userUid: String): List<Chat> {
-        val querySnapshot = firestore.collection("chats")
-            .whereEqualTo("senderUserUid", userUid)
-            .get()
-            .await()
+    // Kullanıcıya ait tüm sohbetleri çekmek
+    fun getChatsForUser(currentUserId: String): Flow<List<Chat>> = callbackFlow {
+        val chatQuery = firestore.collection("chats")
+            .whereArrayContains("participants", currentUserId)
 
-        val receiverQuerySnapshot = firestore.collection("chats")
-            .whereEqualTo("receiverUserUid", userUid)
-            .get()
-            .await()
-
-        val allChats = mutableListOf<Chat>()
-        allChats.addAll(querySnapshot.toObjects(Chat::class.java))
-        allChats.addAll(receiverQuerySnapshot.toObjects(Chat::class.java))
-
-        return allChats.distinctBy { it.id }
-    }
-
-    suspend fun createChat(senderUid: String, receiverUid: String): Chat {
-        val existingChat = getChat(senderUid, receiverUid)
-        if (existingChat != null) {
-            return existingChat
-        }
-
-        val chatRef = firestore.collection("chats").document()
-        val chat = Chat(
-            id = chatRef.id,
-            senderUserUid = senderUid,
-            receiverUserUid = receiverUid,
-            messagesIds = emptyList()
-        )
-        chatRef.set(chat).await()
-        return chat
-    }
-
-
-    suspend fun getChat(senderUid: String, receiverUid: String): Chat? {
-        val querySnapshot = firestore.collection("chats")
-            .whereEqualTo("senderUserUid", senderUid)
-            .whereEqualTo("receiverUserUid", receiverUid)
-            .get()
-            .await()
-
-        return querySnapshot.documents.firstOrNull()?.toObject(Chat::class.java)
-    }
-
-
-    suspend fun getChatByChatId(chatId: String): Chat? {
-        return try {
-            val documentSnapshot = firestore.collection("chats")
-                .document(chatId)
-                .get()
-                .await()
-
-            if (documentSnapshot.exists()) {
-                documentSnapshot.toObject(Chat::class.java)
-            } else {
-                null
+        val listener = chatQuery.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
             }
-        } catch (e: Exception) {
-            throw e
+
+            if (snapshot != null) {
+                val chats = snapshot.toObjects(Chat::class.java)
+                trySend(chats)
+            }
         }
+
+        awaitClose { listener.remove() }
     }
 
-    suspend fun addMessageToChat(chatId: String, message: Message): Boolean {
-        val messageRef = firestore.collection("messages").document()
-        val newMessage = message.copy(id = messageRef.id)
-        messageRef.set(newMessage).await()
-
-        val chatRef = firestore.collection("chats").document(chatId)
-        chatRef.update("messagesIds", FieldValue.arrayUnion(newMessage.id)).await()
-
-        return true
-    }
-
-    suspend fun getMessagesForChat(chatId: String): List<Message> {
-        val chatSnapshot = firestore.collection("chats").document(chatId).get().await()
-        val messageIds = chatSnapshot.get("messagesIds") as? List<String> ?: emptyList()
-
-        return if (messageIds.isNotEmpty()) {
-            firestore.collection("messages")
-                .whereIn(FieldPath.documentId(), messageIds)
-                .get()
-                .await()
-                .toObjects(Message::class.java)
-                .sortedBy { it.date }
-        } else {
-            emptyList()
-        }
-    }
-
-    suspend fun getAllChatsByUserUid(userUid: String): List<Chat> {
-        val querySnapshot = firestore.collection("chats")
-            .whereEqualTo("senderUserUid", userUid)
-            .get()
+    suspend fun sendMessage(chatId: String, message: Message) {
+        firestore.collection("chats").document(chatId)
+            .collection("messages")
+            .add(message)
             .await()
 
-        return querySnapshot.documents.mapNotNull { it.toObject(Chat::class.java) }
+        // Update last message in chat document
+        firestore.collection("chats").document(chatId)
+            .update(
+                mapOf(
+                    "lastMessage" to message.content,
+                    "lastMessageTimestamp" to message.timestamp
+                )
+            )
+            .await()
     }
+
+    fun getChatMessages(chatId: String): Flow<List<Message>> = callbackFlow {
+        val query = firestore.collection("chats").document(chatId)
+            .collection("messages")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+
+        val listener = query.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null) {
+                val messages = snapshot.toObjects(Message::class.java)
+                trySend(messages)
+            }
+        }
+
+        awaitClose { listener.remove() }
+    }
+
+    fun getOrCreateChat(itemId: String, currentUserId: String, otherUserId: String): Flow<Chat> = callbackFlow {
+        val chatQuery = firestore.collection("chats")
+            .whereEqualTo("itemId", itemId)
+            .whereArrayContains("participants", currentUserId)
+            .limit(1)
+
+        val listener = chatQuery.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error) // Hata durumunda akışı kapat
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && !snapshot.isEmpty) {
+                val chat = snapshot.documents[0].toObject(Chat::class.java)!!
+                trySend(chat).isSuccess // Gönderim başarılı mı kontrol et
+            } else {
+                // Chat yoksa yeni bir tane oluştur
+                val newChat = Chat(
+                    itemId = itemId,
+                    participants = listOf(currentUserId, otherUserId)
+                )
+                firestore.collection("chats").add(newChat).addOnSuccessListener { documentReference ->
+                    val createdChat = newChat.copy(id = documentReference.id)
+                    trySend(createdChat).isSuccess // Gönderim başarılı mı kontrol et
+                }.addOnFailureListener { e ->
+                    close(e) // Hata durumunda akışı kapat
+                }
+            }
+        }
+
+        awaitClose { listener.remove() }
+    }
+
 
     suspend fun fetchLostItems(): List<LostItem> {
         return firestore.collection("lost_items")
@@ -123,7 +115,6 @@ class FirestoreDataSource(private val firestore: FirebaseFirestore) {
             .toObjects(LostItem::class.java)
     }
 
-    // Tek bir alanı güncelleyen fonksiyon
     suspend fun updateLostItemField(itemId: String, field: String, value: Any) {
         firestore.collection("lost_items")
             .document(itemId)
@@ -137,54 +128,6 @@ class FirestoreDataSource(private val firestore: FirebaseFirestore) {
             .get()
             .await()
             .toObject(LostItem::class.java)!!
-    }
-
-    suspend fun getChatById(userUid: String, chatId: Int): Chat? {
-        val firestore = FirebaseFirestore.getInstance()
-
-        return try {
-            val chatDocument = firestore
-                .collection("users")
-                .document(userUid)
-                .collection("chats")
-                .whereEqualTo("id", chatId)
-                .get()
-                .await()
-
-            if (chatDocument.documents.isNotEmpty()) {
-                chatDocument.documents.first().toObject(Chat::class.java)
-            } else {
-                null // Chat bulunamadı
-            }
-        } catch (e: Exception) {
-            Log.e("FirestoreError", "Error fetching chat with ID $chatId for user $userUid: ${e.message}")
-            null
-        }
-    }
-
-
-    suspend fun getAllChatByUserUid(userUid: String): List<Chat> {
-        val firestore = FirebaseFirestore.getInstance()
-        val chats = mutableListOf<Chat>()
-
-        try {
-            val userChatsSnapshot = firestore
-                .collection("users")
-                .document(userUid)
-                .collection("chats")
-                .get()
-                .await()
-
-            for (document in userChatsSnapshot.documents) {
-                val chat = document.toObject(Chat::class.java)
-                if (chat != null) {
-                    chats.add(chat)
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("FirestoreError", "Error fetching chats for user $userUid: ${e.message}")
-        }
-        return chats
     }
 
     suspend fun getLostItemsInArea(location: Location, radius: Double): List<LostItem> {
