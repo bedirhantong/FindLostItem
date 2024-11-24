@@ -193,6 +193,7 @@ fun ReportFoundItemScreen() {
                         }
                     }
                 )
+
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(150.dp),
                     modifier = Modifier
