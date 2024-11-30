@@ -6,26 +6,40 @@ sealed class BottomNavigationItems(
     val route: String,
     val title: String,
     val selectedIcon: Int,
-    val unselectedIcon: Int = selectedIcon
+    val unselectedIcon: Int
 ) {
-
     object Home : BottomNavigationItems(
-        "home", "Home", R.drawable.home, R.drawable.home_light
+        route = "home",
+        title = "Home",
+        selectedIcon = R.drawable.home,
+        unselectedIcon = R.drawable.home_light
     )
 
     object Search : BottomNavigationItems(
-        "search", "Search", R.drawable.search, R.drawable.search
+        route = "search",
+        title = "Search",
+        selectedIcon = R.drawable.search,
+        unselectedIcon = R.drawable.search
     )
 
     object AddItem : BottomNavigationItems(
-        "add_item", "Post", R.drawable.add_light, R.drawable.add
+        route = "add_item",
+        title = "Post",
+        selectedIcon = R.drawable.add_light,
+        unselectedIcon = R.drawable.add
     )
 
     object MapItem : BottomNavigationItems(
-        "map_item", "Map", R.drawable.map_logo, R.drawable.map_logo
+        route = "map_item",
+        title = "Map",
+        selectedIcon = R.drawable.map_logo,
+        unselectedIcon = R.drawable.map_logo
     )
 
     object Profile : BottomNavigationItems(
-        "profile", "Profile", R.drawable.profile_light, R.drawable.profile_dark
+        route = "profile",
+        title = "Profile",
+        selectedIcon = R.drawable.profile_light,
+        unselectedIcon = R.drawable.profile_dark
     )
 }
