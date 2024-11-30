@@ -123,9 +123,7 @@ fun LostItemsScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = {
-                        navController.navigate("dmChatScreen")
-                    }) {
+                    IconButton(onClick = { navController.navigate("dmChatScreen") }) {
                         Icon(
                             painter = painterResource(id = R.drawable.dm),
                             contentDescription = "Direct Message",
@@ -142,41 +140,6 @@ fun LostItemsScreen(
                     .fillMaxSize()
                     .padding(it)
             ) {
-                OutlinedTextField(
-                    value = viewModel.searchQuery.collectAsState().value,
-                    onValueChange = { viewModel.updateSearchQuery(it) },
-                    label = {
-                        Text(
-                            "Search for items",
-                            style = TextStyle(
-                                color = Color(0xFF99704D),
-                                fontWeight = FontWeight.Normal
-                            )
-                        )
-                    }, // Etiket metnini güncelle
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 7.dp, end = 7.dp, top = 7.dp, bottom = 12.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    prefix = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search icon",
-                            tint = Color(0xFF99704D)
-                        )
-                    },
-                    maxLines = 1,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        cursorColor = Color(0xFFED822B),
-                        focusedBorderColor = Color(0xFFED822B),
-                        focusedPrefixColor = Color(0xFFED822B),
-                        unfocusedBorderColor = Color.Gray,
-                        focusedLabelColor = Color(0xFFED822B),
-                        focusedTextColor = Color(0xFF99704D),
-                    ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
-                )
-
                 // SwipeRefresh
                 SwipeRefresh(
                     state = swipeRefreshState,

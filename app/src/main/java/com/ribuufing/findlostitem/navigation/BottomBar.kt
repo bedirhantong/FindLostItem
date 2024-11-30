@@ -24,6 +24,7 @@ fun BottomBar(
 ) {
     val screens = listOf(
         BottomNavigationItems.Home,
+        BottomNavigationItems.Search,
         BottomNavigationItems.AddItem,
         BottomNavigationItems.MapItem,
         BottomNavigationItems.Profile

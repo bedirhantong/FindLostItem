@@ -13,6 +13,10 @@ sealed class BottomNavigationItems(
         "home", "Home", R.drawable.home, R.drawable.home_light
     )
 
+    object Search : BottomNavigationItems(
+        "search", "Search", R.drawable.search, R.drawable.search
+    )
+
     object AddItem : BottomNavigationItems(
         "add_item", "Post", R.drawable.add_light, R.drawable.add
     )
