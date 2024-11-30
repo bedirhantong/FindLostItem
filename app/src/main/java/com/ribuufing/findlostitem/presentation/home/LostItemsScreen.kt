@@ -81,23 +81,22 @@ fun LostItemsScreen(
 
     val user = when (val userInfoState = viewModel.userInfos.collectAsState().value) {
         is Result.Success -> userInfoState.data
-        is Result.Failure -> {
-            // Hata durumu için yapılacak işlemler
-            null
-        }
-        else -> null // Diğer durumlar için de null
-    }
-
-
-    LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            viewModel.refreshLostItems()
-            isRefreshing = false
-        }
+        is Result.Failure -> null
+        else -> null
     }
 
     LaunchedEffect(Unit) {
+        viewModel.fetchLostItems()
+        viewModel.getUserInfosByUid()
         noInternetViewModel.checkInternetConnection()
+    }
+
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            viewModel.fetchLostItems()
+            viewModel.getUserInfosByUid()
+            isRefreshing = false
+        }
     }
 
     if (!isInternetAvailable) {

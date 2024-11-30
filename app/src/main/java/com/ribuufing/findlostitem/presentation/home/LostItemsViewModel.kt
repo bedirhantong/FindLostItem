@@ -44,16 +44,22 @@ class LostItemsViewModel @Inject constructor(
             sortLostItems(filteredItems)
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    init {
-        fetchLostItems()
-        getUserInfosByUid()
+    private fun calculateVoteRatio(item: LostItem): Double {
+        val voteDiff = item.numOfUpVotes - Math.abs(item.numOfDownVotes)
+        return if (voteDiff > 0) {
+            voteDiff.toDouble()
+        } else {
+            0.0
+        }
     }
 
     private fun sortLostItems(items: List<LostItem>): List<LostItem> {
-        return items.sortedByDescending { it.timestamp.seconds }
+        return items.sortedWith(
+            compareByDescending<LostItem> { calculateVoteRatio(it) }
+        )
     }
 
-    private fun fetchLostItems() {
+    fun fetchLostItems() {
         viewModelScope.launch {
             _isLoading.value = true
             _lostItems.value = getLostItemsUseCase.invoke()
@@ -65,7 +71,7 @@ class LostItemsViewModel @Inject constructor(
         return getCurrentUserUidUseCase.invoke()
     }
 
-    private fun getUserInfosByUid() {
+    fun getUserInfosByUid() {
         val uid = getCurrentUserUid()
 
         viewModelScope.launch {
@@ -96,14 +102,12 @@ class LostItemsViewModel @Inject constructor(
     fun upvoteItem(itemId: String, currentUpvotes: Int) {
         viewModelScope.launch {
             upVoteItemUseCase.invoke(itemId, currentUpvotes)
-            refreshLostItems()
         }
     }
 
     fun downVoteItem(itemId: String, currentDownvotes: Int) {
         viewModelScope.launch {
             downVoteItemUseCase.invoke(itemId, currentDownvotes)
-            refreshLostItems()
         }
     }
 
