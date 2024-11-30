@@ -1,6 +1,5 @@
 package com.ribuufing.findlostitem.presentation.home
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ribuufing.findlostitem.data.model.LostItem
@@ -12,7 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import androidx.compose.runtime.State
 import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.domain.use_cases.GetCurrentUserUidUseCase
 import com.ribuufing.findlostitem.domain.use_cases.GetUserInfosByUidUseCase
@@ -42,12 +40,17 @@ class LostItemsViewModel @Inject constructor(
 
     val filteredLostItems: StateFlow<List<LostItem>> =
         combine(_lostItems, _searchQuery) { items, query ->
-            filterLostItems(items, query)
+            val filteredItems = filterLostItems(items, query)
+            sortLostItems(filteredItems)
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     init {
         fetchLostItems()
         getUserInfosByUid()
+    }
+
+    private fun sortLostItems(items: List<LostItem>): List<LostItem> {
+        return items.sortedByDescending { it.timestamp.seconds }
     }
 
     private fun fetchLostItems() {
@@ -85,20 +88,22 @@ class LostItemsViewModel @Inject constructor(
 
     private fun filterLostItems(items: List<LostItem>, query: String): List<LostItem> {
         return items.filter {
-            it.title.contains(query, ignoreCase = true) ||
-                    it.description.contains(query, ignoreCase = true)
+            it.itemName.contains(query, ignoreCase = true) ||
+                    it.message.contains(query, ignoreCase = true)
         }
     }
 
     fun upvoteItem(itemId: String, currentUpvotes: Int) {
         viewModelScope.launch {
-            upVoteItemUseCase.invoke(itemId, currentUpvotes + 1)
+            upVoteItemUseCase.invoke(itemId, currentUpvotes)
+            refreshLostItems()
         }
     }
 
     fun downVoteItem(itemId: String, currentDownvotes: Int) {
         viewModelScope.launch {
-            downVoteItemUseCase.invoke(itemId, currentDownvotes - 1)
+            downVoteItemUseCase.invoke(itemId, currentDownvotes)
+            refreshLostItems()
         }
     }
 

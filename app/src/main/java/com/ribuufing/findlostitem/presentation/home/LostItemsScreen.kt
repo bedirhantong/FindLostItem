@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +32,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,9 +60,10 @@ import com.ribuufing.findlostitem.R
 import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.presentation.nointernet.NoInternetScreen
 import com.ribuufing.findlostitem.presentation.nointernet.NoInternetViewModel
-import com.ribuufing.findlostitem.presentation.profile.presentation.ProfileContent
 import com.ribuufing.findlostitem.utils.Result
-import kotlinx.coroutines.launch
+import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -253,8 +252,8 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                user?.uid?.takeIf { it != item.foundByUser?.uid }?.let {
-                    navController.navigate("item_detail/${item.id}")
+                user?.uid?.takeIf { it != item.senderInfo.senderId }?.let {
+                    navController.navigate("item_detail/${item.itemId}")
                 }
 
             }
@@ -267,7 +266,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
     ) {
         // Item Name
         Text(
-            text = item.title,
+            text = item.itemName,
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(bottom = 8.dp),
         )
@@ -287,7 +286,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = item.foundWhere.toString(),
+                        text = item.foundWhere,
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF99704D)
                     )
@@ -308,7 +307,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = item.placedWhere.toString(),
+                        text = item.placedWhere,
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF99704D)
                     )
@@ -316,7 +315,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
             }
 
             Text(
-                text = item.date,
+                text = formatTimestamp(item.timestamp),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF99704D)
             )
@@ -326,7 +325,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
 
         // Description
         Text(
-            text = item.description,
+            text = item.message,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -404,7 +403,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
         ) {
             IconButton(
                 onClick = {
-                    viewModel.upvoteItem(item.id.toString(), upvoteCount)
+                    viewModel.upvoteItem(item.itemId.toString(), upvoteCount)
                     upvoteCount++
                 },
                 modifier = Modifier.wrapContentWidth()
@@ -419,7 +418,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
 
             IconButton(
                 onClick = {
-                    viewModel.downVoteItem(item.id.toString(), downvoteCount)
+                    viewModel.downVoteItem(item.itemId.toString(), downvoteCount)
                     downvoteCount--
                 },
                 modifier = Modifier.wrapContentWidth()
@@ -446,6 +445,19 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
     }
 }
 
+
+
+fun formatTimestamp(timestamp: Timestamp): String {
+    val date = timestamp.toDate()
+
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) // Gün/Ay/Yıl
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())     // Saat:Dakika
+
+    val formattedDate = dateFormat.format(date)
+    val formattedTime = timeFormat.format(date)
+
+    return "$formattedDate $formattedTime"
+}
 
 @Composable
 fun ShimmerEffect(

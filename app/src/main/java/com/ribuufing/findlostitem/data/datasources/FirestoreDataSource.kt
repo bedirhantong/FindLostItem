@@ -110,31 +110,39 @@ class FirestoreDataSource(private val firestore: FirebaseFirestore) {
     }
 
     suspend fun fetchLostItems(): List<LostItem> {
-        return firestore.collection("lost_items")
+        return firestore.collection("found_items_test")
             .get()
             .await()
             .toObjects(LostItem::class.java)
     }
 
     suspend fun updateLostItemField(itemId: String, field: String, value: Any) {
-        firestore.collection("lost_items")
+        firestore.collection("found_items_test")
             .document(itemId)
             .update(field, value)
             .await()
     }
 
     suspend fun getLostItemById(itemId: String): LostItem {
-        return firestore.collection("lost_items")
+        return firestore.collection("found_items_test")
             .document(itemId)
             .get()
             .await()
             .toObject(LostItem::class.java)!!
     }
 
+    suspend fun getLostItemsByUserId(userId: String): List<LostItem> {
+        return firestore.collection("found_items_test")
+            .whereEqualTo("senderInfo.senderId", userId)
+            .get()
+            .await()
+            .toObjects(LostItem::class.java)
+    }
+
     suspend fun getLostItemsInArea(location: Location, radius: Double): List<LostItem> {
         val allItems = fetchLostItems()
         return allItems.filter { item ->
-            val itemLocation = Location(item.foundWhere.latitude, item.foundWhere.longitude)
+            val itemLocation = Location(item.foundLatLng.latitude, item.foundLatLng.longitude)
             calculateDistance(location, itemLocation) <= radius
         }
     }

@@ -50,10 +50,10 @@ class MapViewModel @Inject constructor(
 
             // Find nearby items within 500 meters
             val clusterItems = items.filter {
-                it != item && it.placedWhere.distanceTo(item.placedWhere) < 500
+                it != item && it.deliverLatLng.distanceTo(item.deliverLatLng) < 500
             }
             val cluster = Cluster(
-                center = item.placedWhere,
+                center = item.deliverLatLng,
                 items = clusterItems + item
             )
             clusters.add(cluster)

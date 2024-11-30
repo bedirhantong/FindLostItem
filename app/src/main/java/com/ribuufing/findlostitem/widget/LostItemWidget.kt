@@ -51,33 +51,33 @@ class LostItemWidget : GlanceAppWidget() {
             lastLostItem?.let {
                 // Display title
                 Text(
-                    text = it.title.ifEmpty { "No title available" },
+                    text = it.itemName.ifEmpty { "No title available" },
                     style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold),
                     modifier = GlanceModifier.padding(bottom = 4.dp)
                 )
                 // Display description
                 Text(
-                    text = it.description.ifEmpty { "No description available" },
+                    text = it.message.ifEmpty { "No description available" },
                     style = TextStyle(fontSize = 14.sp),
                     modifier = GlanceModifier.padding(bottom = 4.dp)
                 )
                 // Found and placed locations
                 Text(
-                    text = "Found at: ${it.foundWhere}",
+                    text = "Found at: ${it.foundLatLng}",
                     style = TextStyle(fontSize = 14.sp),
                     modifier = GlanceModifier.padding(bottom = 4.dp)
                 )
                 Text(
-                    text = "Placed at: ${it.placedWhere}",
+                    text = "Placed at: ${it.deliverLatLng}",
                     style = TextStyle(fontSize = 14.sp),
                     modifier = GlanceModifier.padding(bottom = 4.dp)
                 )
                 // Display date
-                Text(
-                    text = "Date: ${it.date.ifEmpty { "No date available" }}",
-                    style = TextStyle(fontSize = 12.sp),
-                    modifier = GlanceModifier.padding(bottom = 4.dp)
-                )
+//                Text(
+//                    text = "Date: ${it.timestamp.ifEmpty { "No date available" }}",
+//                    style = TextStyle(fontSize = 12.sp),
+//                    modifier = GlanceModifier.padding(bottom = 4.dp)
+//                )
             } ?: run {
                 Text(text = "No items found", style = TextStyle(fontSize = 14.sp))
             }

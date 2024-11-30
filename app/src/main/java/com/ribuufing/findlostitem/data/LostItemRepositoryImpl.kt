@@ -33,4 +33,8 @@ class LostItemRepositoryImpl @Inject constructor(
         return dataSource.getLostItemById(itemId)
     }
 
+    override suspend fun getLostItemsByUserId(userId: String): List<LostItem> {
+        return dataSource.getLostItemsByUserId(userId)
+    }
+
 }

@@ -29,6 +29,7 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.ribuufing.findlostitem.R
 import com.ribuufing.findlostitem.navigation.Routes
+import com.ribuufing.findlostitem.presentation.home.formatTimestamp
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +86,7 @@ fun LostItemDetailScreen(
                             .verticalScroll(rememberScrollState())
                     ) {
                         Text(
-                            text = item.title,
+                            text = item.itemName,
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
@@ -95,20 +96,19 @@ fun LostItemDetailScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(imageVector = Icons.Default.Place, contentDescription = null)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(text = item.foundWhere.toString(), style = MaterialTheme.typography.bodySmall)
+                                Text(text = item.foundWhere, style = MaterialTheme.typography.bodySmall)
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(imageVector = Icons.Default.Star, contentDescription = null)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(text = item.placedWhere.toString(), style = MaterialTheme.typography.bodySmall)
+                                Text(text = item.placedWhere, style = MaterialTheme.typography.bodySmall)
                             }
                         }
 
-                        // Date
                         Text(
-                            text = item.date,
+                            text = formatTimestamp(item.timestamp),
                             style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            color = Color(0xFF99704D)
                         )
 
                         // Image slider
@@ -139,9 +139,9 @@ fun LostItemDetailScreen(
                         ) {
                             Button(
                                 onClick = {
-                                    val receiverUid = item.foundByUser?.uid ?: return@Button
+                                    val receiverUid = item.senderInfo.senderId ?: return@Button
                                     currentUserUid?.let { senderUid ->
-                                        navController.navigate("${Routes.Chat.route}/${item.id}/$senderUid/$receiverUid")
+                                        navController.navigate("${Routes.Chat.route}/${item.itemId}/$senderUid/$receiverUid")
                                     }
                                 }
                             ) {

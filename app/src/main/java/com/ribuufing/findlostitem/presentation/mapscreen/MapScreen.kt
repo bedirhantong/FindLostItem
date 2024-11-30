@@ -152,7 +152,7 @@ fun MapScreen(
                         BottomSheetContent(
                             items = selectedClusterItems,
                             onItemClick = { item ->
-                                navController.navigate("item_detail/${item.id}")
+                                navController.navigate("item_detail/${item.itemId}")
                             }
                         )
                     }
@@ -242,7 +242,7 @@ fun LostItemCard(
         ) {
             AsyncImage(
                 model = item.images.firstOrNull(),
-                contentDescription = item.title,
+                contentDescription = item.itemName,
                 modifier = Modifier
                     .size(60.dp)
                     .clip(MaterialTheme.shapes.small),
@@ -255,11 +255,11 @@ fun LostItemCard(
                     .padding(horizontal = 12.dp)
             ) {
                 Text(
-                    text = item.title,
+                    text = item.itemName,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = item.description,
+                    text = item.message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -269,7 +269,7 @@ fun LostItemCard(
                 horizontalAlignment = Alignment.End
             ) {
                 Text(
-                    text = "${calculateDistance(item.foundWhere)} km",
+                    text = "${calculateDistance(item.foundLatLng)} km",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )

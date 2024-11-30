@@ -55,11 +55,11 @@ import com.ribuufing.findlostitem.presentation.home.ShimmerEffect
 import com.ribuufing.findlostitem.presentation.nointernet.NoInternetScreen
 import com.ribuufing.findlostitem.presentation.nointernet.NoInternetViewModel
 import com.google.accompanist.pager.*
-//noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.*
 import androidx.compose.ui.draw.clip
 import com.ribuufing.findlostitem.data.model.LostItem
 import com.ribuufing.findlostitem.data.model.User
+import com.ribuufing.findlostitem.presentation.home.formatTimestamp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -187,7 +187,7 @@ fun ProfileContent(user: User, foundItems: List<LostItem>) {
                 .height(150.dp)
         ) {
             Image(
-                painter = rememberAsyncImagePainter(model =  "https://webis.akdeniz.edu.tr/uploads/1167/slider/5a106276-13d5-42e4-ace4-b335f5c3b946.png"),
+                painter = rememberAsyncImagePainter(model = "https://webis.akdeniz.edu.tr/uploads/1167/slider/5a106276-13d5-42e4-ace4-b335f5c3b946.png"),
                 contentDescription = "Background Image",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -198,7 +198,6 @@ fun ProfileContent(user: User, foundItems: List<LostItem>) {
                 .padding(horizontal = 16.dp)
                 .offset(y = (-40).dp)
         ) {
-            // Profil Fotoğrafı
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -257,7 +256,6 @@ fun ProfileContent(user: User, foundItems: List<LostItem>) {
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-
             Spacer(modifier = Modifier.height(16.dp))
 
             TabPagerExample(it = PaddingValues(0.dp), foundItems = foundItems)
@@ -265,14 +263,10 @@ fun ProfileContent(user: User, foundItems: List<LostItem>) {
     }
 }
 
-
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem>) {
-    val tabs = listOf(
-        "Found items"
-//        , "Tab 2", "Tab 3"
-    )
+    val tabs = listOf("Lost items")
     val pagerState = rememberPagerState()
 
     Column(
@@ -318,32 +312,26 @@ fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem>) {
         ) { page ->
             when (page) {
                 0 -> ListContent(foundItems)
-//                1 -> ListContent(foundItems)
-//                2 -> ListContent(foundItems)
             }
         }
     }
 }
 
 @Composable
-fun ListContent(foundItems:  List<LostItem>) {
-
+fun ListContent(foundItems: List<LostItem>) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(bottom = 56.dp)
     ) {
         items(foundItems.size) { index ->
-            LostItemRow(
-                item = foundItems[index]
-            )
+            LostItemRow(item = foundItems[index])
         }
     }
 }
 
 @Composable
 fun LostItemRow(item: LostItem) {
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -391,22 +379,21 @@ fun LostItemRow(item: LostItem) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = item.title,
+                    text = item.itemName,
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.Black,
                 )
 
                 Text(
-                    text = "Lost on ${item.date}",
+                    text = formatTimestamp(item.timestamp),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color(0xFF99704D)
                 )
             }
         }
 
         IconButton(
-            onClick = {
-            }
+            onClick = {}
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.trash),

@@ -1,8 +1,6 @@
 package com.ribuufing.findlostitem.presentation.chat
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -24,7 +22,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,15 +37,11 @@ import com.ribuufing.findlostitem.data.model.Message
 import com.ribuufing.findlostitem.utils.Result
 import androidx.navigation.NavHostController
 import com.google.firebase.Timestamp
-import com.ribuufing.findlostitem.data.model.Chat
 import com.ribuufing.findlostitem.data.model.LostItem
 import java.text.SimpleDateFormat
 import java.util.Locale
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.transform.CircleCropTransformation
-import coil.transform.RoundedCornersTransformation
-import com.ribuufing.findlostitem.presentation.chat.components.AnimatedScrollToBottomButton
+import com.ribuufing.findlostitem.presentation.home.formatTimestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -75,7 +67,9 @@ fun MessageInputField(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { /* Emoji veya dosya ekleme özelliği eklenebilir */ }
+                onClick = {
+                    // TODO : Implement attachment functionality as in whatsapp
+                }
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -299,7 +293,7 @@ fun ChatScreen(
                                                 Spacer(modifier = Modifier.width(8.dp))
                                             }
                                             Text(
-                                                text = item.title,
+                                                text = item.itemName,
                                                 color = MaterialTheme.colorScheme.onPrimary,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
@@ -363,20 +357,20 @@ fun ChatScreen(
                                                 Spacer(modifier = Modifier.height(8.dp))
                                             }
                                             Text(
-                                                text = item.description,
+                                                text = item.itemName,
                                                 color = MaterialTheme.colorScheme.onPrimary,
                                                 style = MaterialTheme.typography.bodyMedium
                                             )
                                             Spacer(modifier = Modifier.height(4.dp))
                                             Text(
-                                                text = "Found: ${if (item.isFound) "Yes" else "No"}",
+                                                text = item.message,
                                                 color = MaterialTheme.colorScheme.onPrimary,
                                                 style = MaterialTheme.typography.bodySmall
                                             )
                                             Text(
-                                                text = "Date: ${item.date}",
+                                                text = formatTimestamp(item.timestamp),
+                                                style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onPrimary,
-                                                style = MaterialTheme.typography.bodySmall
                                             )
                                         }
                                     }

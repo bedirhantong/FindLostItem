@@ -9,4 +9,5 @@ interface LostItemRepository {
     suspend fun downvoteLostItem(itemId: String, currentDownvotes: Int)
     suspend fun getLostItemsInArea(location: Location, radius: Double): List<LostItem>
     suspend fun getLostItemById(itemId: String): LostItem
+    suspend fun getLostItemsByUserId(userId: String): List<LostItem>
 }
