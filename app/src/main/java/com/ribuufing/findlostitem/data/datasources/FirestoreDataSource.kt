@@ -1,8 +1,12 @@
 package com.ribuufing.findlostitem.data.datasources
 
+import android.net.Uri
 import android.util.Log
+import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.storage.FirebaseStorage
 import com.ribuufing.findlostitem.data.model.Chat
 import com.ribuufing.findlostitem.data.model.Location
 import com.ribuufing.findlostitem.data.model.LostItem
@@ -16,7 +20,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-class FirestoreDataSource(private val firestore: FirebaseFirestore) {
+class FirestoreDataSource(private val firestore: FirebaseFirestore, private val storage: FirebaseStorage) {
 
     fun getChatsForUser(currentUserId: String): Flow<List<Chat>> = callbackFlow {
         val chatQuery = firestore.collection("chats")
@@ -156,6 +160,58 @@ class FirestoreDataSource(private val firestore: FirebaseFirestore) {
                 sin(dLon / 2) * sin(dLon / 2)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
+    }
+
+    suspend fun uploadFoundItem(
+        itemId: String,
+        itemName: String,
+        message: String,
+        foundWhere: String,
+        placedWhere: String,
+        foundLatLng: LatLng,
+        deliverLatLng: LatLng,
+        images: List<String>,
+        userId: String,
+        userEmail: String
+    ) {
+        val data = hashMapOf(
+            "itemId" to itemId,
+            "senderInfo" to hashMapOf(
+                "senderId" to userId,
+                "email" to userEmail
+            ),
+            "timestamp" to FieldValue.serverTimestamp(),
+            "itemName" to itemName,
+            "message" to message,
+            "foundWhere" to foundWhere,
+            "placedWhere" to placedWhere,
+            "foundLatLng" to foundLatLng,
+            "deliverLatLng" to deliverLatLng,
+            "images" to images,
+            "is_picked" to false,
+            "numOfDownVotes" to 0,
+            "numOfUpVotes" to 0
+        )
+
+        firestore.collection("found_items_test")
+            .document(itemId)
+            .set(data)
+            .await()
+    }
+
+    suspend fun uploadImages(images: List<Uri>, itemId: String, userId: String): List<String> {
+        val imageUrls = mutableListOf<String>()
+
+        for ((index, imageUri) in images.withIndex()) {
+            val imageRef = storage.reference
+                .child("images/items-by-user/$userId/$itemId/${itemId}_${index}.jpg")
+            
+            imageRef.putFile(imageUri).await()
+            val downloadUrl = imageRef.downloadUrl.await()
+            imageUrls.add(downloadUrl.toString())
+        }
+
+        return imageUrls
     }
 
 }

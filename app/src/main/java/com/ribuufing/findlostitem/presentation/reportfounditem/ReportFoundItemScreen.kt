@@ -51,10 +51,12 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -74,24 +76,25 @@ import java.util.UUID
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportFoundItemScreen(
+    viewModel: ReportFoundItemViewModel = hiltViewModel(),
     onNavigateToHome: () -> Unit,
     navController: NavHostController
-
 ) {
-    var itemName by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf("") }
-    var foundWhere by remember { mutableStateOf("") }
-    var placedWhere by remember { mutableStateOf("") }
-    val selectImages = remember { mutableStateListOf<Uri>() }
-    var foundLatLng by remember { mutableStateOf<LatLng?>(null) }
-    var deliverLatLng by remember { mutableStateOf<LatLng?>(null) }
+    val itemName by viewModel.itemName.collectAsState()
+    val message by viewModel.message.collectAsState()
+    val foundWhere by viewModel.foundWhere.collectAsState()
+    val placedWhere by viewModel.placedWhere.collectAsState()
+    val selectedImages by viewModel.selectedImages.collectAsState()
+    val foundLatLng by viewModel.foundLatLng.collectAsState()
+    val deliverLatLng by viewModel.deliverLatLng.collectAsState()
+    val sendStatus by viewModel.sendStatus.collectAsState()
+    val isFormValid by viewModel.isFormValid.collectAsState()
+
     var showLocationPickerType by remember { mutableStateOf<LocationPickerType?>(null) }
 
-    var sendStatus by remember { mutableStateOf(SendStatus.Idle) }
     val galleryLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
-            selectImages.clear()
-            selectImages.addAll(uris)
+            viewModel.updateSelectedImages(uris)
         }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -99,8 +102,6 @@ fun ReportFoundItemScreen(
         when (sendStatus) {
             SendStatus.Sending -> {
                 snackbarHostState.showSnackbar("Gönderiliyor...")
-
-
             }
 
             SendStatus.Success -> {
@@ -111,8 +112,6 @@ fun ReportFoundItemScreen(
             SendStatus.Error -> {
                 snackbarHostState.showSnackbar("Gönderim başarısız!")
             }
-
-
             else -> {}
         }
     }
@@ -127,26 +126,10 @@ fun ReportFoundItemScreen(
                 },
                 title = { Text("Post item") },
                 actions = {
-                    val isFormValid = itemName.isNotBlank() && message.isNotBlank() &&
-                            foundWhere.isNotBlank() && placedWhere.isNotBlank() &&
-                            deliverLatLng != null && foundLatLng != null && selectImages.isNotEmpty()
-
-
                     IconButton(
                         enabled = isFormValid,
                         onClick = {
-                            sendStatus = SendStatus.Sending
-                            sendToFirestoreWithImages(
-                                itemName,
-                                message,
-                                foundWhere,
-                                placedWhere,
-                                foundLatLng,
-                                deliverLatLng,
-                                selectImages
-                            ) { isSuccess ->
-                                sendStatus = if (isSuccess) SendStatus.Success else SendStatus.Error
-                            }
+                            viewModel.submitReport()
                         }
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
@@ -170,7 +153,7 @@ fun ReportFoundItemScreen(
             ) {
                 CustomTextField(
                     value = itemName,
-                    onValueChange = { itemName = it },
+                    onValueChange = { viewModel.updateItemName(it) },
                     label = "Item name",
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) }
                 )
@@ -179,7 +162,7 @@ fun ReportFoundItemScreen(
 
                 CustomTextField(
                     value = message,
-                    onValueChange = { message = it },
+                    onValueChange = { viewModel.updateMessage(it) },
                     label = "Message",
                     leadingIcon = { Icon(Icons.Default.MailOutline, contentDescription = null) }
                 )
@@ -188,7 +171,7 @@ fun ReportFoundItemScreen(
 
                 CustomTextField(
                     value = foundWhere,
-                    onValueChange = { foundWhere = it },
+                    onValueChange = { viewModel.updateFoundWhere(it) },
                     label = "Where did you find it?",
                     leadingIcon = {
                         Icon(
@@ -218,7 +201,7 @@ fun ReportFoundItemScreen(
 
                 CustomTextField(
                     value = placedWhere,
-                    onValueChange = { placedWhere = it },
+                    onValueChange = { viewModel.updatePlacedWhere(it) },
                     label = "Where did you deliver it?",
                     leadingIcon = {
                         Icon(
@@ -270,7 +253,7 @@ fun ReportFoundItemScreen(
                         }
                     }
 
-                    items(selectImages) { uri ->
+                    items(selectedImages) { uri ->
                         Box(modifier = Modifier.padding(8.dp)) {
                             Image(
                                 painter = rememberAsyncImagePainter(uri),
@@ -291,7 +274,7 @@ fun ReportFoundItemScreen(
                                     .size(24.dp)
                                     .padding(4.dp)
                                     .clickable {
-                                        selectImages.remove(uri)
+                                        viewModel.removeImage(uri)
                                     }
                                     .align(Alignment.TopEnd)
                             )
@@ -305,9 +288,9 @@ fun ReportFoundItemScreen(
                     onDismiss = { showLocationPickerType = null },
                     onLocationSelected = { latitude, longitude ->
                         if (pickerType == LocationPickerType.FOUND) {
-                            foundLatLng = LatLng(latitude, longitude)
+                            viewModel.updateFoundLocation(LatLng(latitude, longitude))
                         } else {
-                            deliverLatLng = LatLng(latitude, longitude)
+                            viewModel.updateDeliverLocation(LatLng(latitude, longitude))
                         }
                         showLocationPickerType = null
                     },
