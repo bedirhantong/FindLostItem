@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.ribuufing.findlostitem.data.model.Chat
 import com.ribuufing.findlostitem.data.model.LostItem
 import com.ribuufing.findlostitem.data.model.Message
+import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.domain.use_cases.GetLostItemByIdUseCase
 import com.ribuufing.findlostitem.domain.use_cases.GetUserInfosByUidUseCase
 import com.ribuufing.findlostitem.presentation.chat.domain.ChatUseCase
@@ -34,7 +35,7 @@ class ChatViewModel @Inject constructor(
 
     private var currentChatId: String? = null
 
-    private val userImageCache = mutableMapOf<String, String>()
+    private val userCache = mutableMapOf<String, User>()
 
     fun createOrGetChat(itemId: String, currentUserId: String, otherUserId: String) {
         viewModelScope.launch {
@@ -88,21 +89,34 @@ class ChatViewModel @Inject constructor(
     }
 
     fun getUserImage(userId: String): String? {
-        return userImageCache.getOrElse(userId) {
+        return userCache[userId]?.imageUrl ?: run {
+            fetchUserInfo(userId)
+            null
+        }
+    }
+
+    fun getUserName(userId: String): String? {
+        return userCache[userId]?.name ?: run {
+            fetchUserInfo(userId)
+            null
+        }
+    }
+
+    private fun fetchUserInfo(userId: String) {
+        if (!userCache.containsKey(userId)) {
             viewModelScope.launch {
                 try {
                     getUserInfosByUidUseCase(userId).collect { result ->
                         if (result is Result.Success) {
                             result.data?.let { user ->
-                                userImageCache[userId] = user.imageUrl
+                                userCache[userId] = user
                             }
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e("ChatViewModel", "Error fetching user image: ${e.message}")
+                    Log.e("ChatViewModel", "Error fetching user info: ${e.message}")
                 }
             }
-            null
         }
     }
 }
