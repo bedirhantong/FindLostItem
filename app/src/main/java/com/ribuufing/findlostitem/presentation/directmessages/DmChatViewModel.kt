@@ -15,6 +15,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class ChatWithUser(
+    val chat: Chat,
+    val otherUser: User,
+    val itemId: String
+)
+
 @HiltViewModel
 class DmChatViewModel @Inject constructor(
     private val chatUseCase: ChatUseCase,
@@ -22,58 +28,87 @@ class DmChatViewModel @Inject constructor(
     private val getCurrentUserUidUseCase: GetCurrentUserUidUseCase
 ) : ViewModel() {
 
-    private val _chats = MutableStateFlow<List<Chat>>(emptyList())
-    val chats: StateFlow<List<Chat>> = _chats
+    private val _chatWithUsers = MutableStateFlow<List<ChatWithUser>>(emptyList())
+    val chatWithUsers: StateFlow<List<ChatWithUser>> = _chatWithUsers
 
-    private val _isLoading = MutableStateFlow(false)
+    private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _userInfos = MutableStateFlow<Result<User?>>(Result.Loading)
-    val userInfos: StateFlow<Result<User?>> = _userInfos
-
-    private val userCache = mutableMapOf<String, User?>()
-
-
     var currentUserId = ""
+    private val processedChats = mutableSetOf<String>()
+
     init {
-        fetchChats()
+        Log.d("DmChatViewModel", "ViewModel initialized")
+        fetchChatsWithUsers()
     }
 
-    fun getUserInfosByUid(uid: String) {
+    private fun fetchChatsWithUsers() {
         viewModelScope.launch {
-            _isLoading.value = true
             try {
-                if (userCache.containsKey(uid)) {
-                    _userInfos.value = Result.Success(userCache[uid])
-                } else {
-                    getUserInfosByUidUseCase(uid).collect { result ->
-                        if (result is Result.Success) {
-                            userCache[uid] = result.data
+                currentUserId = getCurrentUserUidUseCase.invoke()
+                Log.d("DmChatViewModel", "Current user ID: $currentUserId")
+
+                chatUseCase.getChatsForUser(currentUserId).collect { chats ->
+                    Log.d("DmChatViewModel", "Received ${chats.size} chats")
+                    
+                    if (chats.isEmpty()) {
+                        _isLoading.value = false
+                        return@collect
+                    }
+
+                    val tempList = mutableListOf<ChatWithUser>()
+                    var completedUsers = 0
+
+                    chats.forEach { chat ->
+                        if (!processedChats.contains(chat.id)) {
+                            Log.d("DmChatViewModel", "Processing chat: ${chat.id}")
+                            val otherUserId = chat.participants.find { it != currentUserId }
+                            Log.d("DmChatViewModel", "Other user ID: $otherUserId")
+
+                            otherUserId?.let { uid ->
+                                try {
+                                    getUserInfosByUidUseCase(uid).collect { result ->
+                                        when (result) {
+                                            is Result.Success -> {
+                                                result.data?.let { user ->
+                                                    Log.d("DmChatViewModel", "Found user: ${user.name}")
+                                                    tempList.add(
+                                                        ChatWithUser(
+                                                            chat = chat,
+                                                            otherUser = user,
+                                                            itemId = chat.itemId
+                                                        )
+                                                    )
+                                                    processedChats.add(chat.id)
+                                                }
+                                                completedUsers++
+                                                if (completedUsers == chats.size) {
+                                                    _chatWithUsers.value = tempList.sortedByDescending { 
+                                                        it.chat.lastMessageTimestamp.toDate() 
+                                                    }
+                                                    _isLoading.value = false
+                                                    Log.d("DmChatViewModel", "All users processed, loading complete")
+                                                }
+                                            }
+                                            is Result.Failure -> {
+                                                Log.e("DmChatViewModel", "Error getting user info: ${result.exception.message}")
+                                                completedUsers++
+                                            }
+                                            is Result.Loading -> {
+                                                Log.d("DmChatViewModel", "Loading user info")
+                                            }
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("DmChatViewModel", "Error collecting user info: ${e.message}")
+                                    completedUsers++
+                                }
+                            }
                         }
-                        _userInfos.value = result
                     }
                 }
             } catch (e: Exception) {
-                _userInfos.value = Result.Failure(e)
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-
-    private fun fetchChats() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                currentUserId = getCurrentUserUidUseCase.invoke()
-                chatUseCase.getChatsForUser(currentUserId)
-                    .collect { chats ->
-                        _chats.value = chats
-                        _isLoading.value = false
-                    }
-            } catch (e: Exception) {
-                Log.d("DmChatViewModel", "Error: ${e.localizedMessage}")
+                Log.e("DmChatViewModel", "Error fetching chats: ${e.message}", e)
                 _isLoading.value = false
             }
         }
