@@ -112,6 +112,7 @@ fun ReportFoundItemScreen(
             SendStatus.Error -> {
                 snackbarHostState.showSnackbar("Gönderim başarısız!")
             }
+
             else -> {}
         }
     }
