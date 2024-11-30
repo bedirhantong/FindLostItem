@@ -5,37 +5,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Card
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -44,17 +21,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
-import com.ribuufing.findlostitem.data.model.Chat
-import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.navigation.Routes
-import com.ribuufing.findlostitem.presentation.profile.presentation.ProfileContent
-import com.ribuufing.findlostitem.utils.Result
-
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,144 +37,162 @@ fun DmChatScreen(
     navController: NavHostController,
     viewModel: DmChatViewModel = hiltViewModel()
 ) {
-    val chats by viewModel.chats.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState(initial = false)
-    val userInfoState = viewModel.userInfos.collectAsState().value
+    val chatWithUsers by viewModel.chatWithUsers.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
-    if (isLoading) {
-        CircularProgressIndicator(modifier = Modifier.fillMaxSize().wrapContentSize())
-    } else {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text("Dm") },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color(0xFFED822B),
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                        }
+    Log.d("DmChatScreen", "Recomposing with isLoading: $isLoading, chats count: ${chatWithUsers.size}")
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Messages") },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color(0xFFED822B),
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (isLoading) {
+                Log.d("DmChatScreen", "Showing loading indicator")
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
                 )
-            }
-        ) { paddingValues ->
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = paddingValues
-            ) {
-                items(chats) { chat ->
-                    val currentUser = viewModel.currentUserId
-                    val otherUserId = chat.participants.firstOrNull { it != currentUser }
-
-                    if (otherUserId != null) {
-                        viewModel.getUserInfosByUid(otherUserId)
-                    }
-                    when (userInfoState) {
-                        is Result.Success -> {
-                            val user = userInfoState.data
-                            if (user != null) {
-                                ChatItem(chat = chat, user = user) {
-                                    navController.navigate("${Routes.Chat.route}/${chat.itemId}/$currentUser/$otherUserId")
-                                }
-                            } else {
-                                Text("No chat data available")
+            } else if (chatWithUsers.isEmpty()) {
+                Log.d("DmChatScreen", "No chats available")
+                Text(
+                    text = "No messages yet",
+                    modifier = Modifier.align(Alignment.Center),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            } else {
+                Log.d("DmChatScreen", "Showing chat list with ${chatWithUsers.size} items")
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(chatWithUsers) { chatWithUser ->
+                        Log.d("DmChatScreen", "Rendering chat item for user: ${chatWithUser.otherUser.name}")
+                        ChatListItem(
+                            chatWithUser = chatWithUser,
+                            onClick = {
+                                Log.d("DmChatScreen", "Chat item clicked: ${chatWithUser.chat.id}")
+                                navController.navigate(
+                                    "${Routes.Chat.route}/${chatWithUser.itemId}/${viewModel.currentUserId}/${chatWithUser.otherUser.uid}"
+                                )
                             }
-                        }
-                        is Result.Failure -> {
-                            Text("Error: ${userInfoState.exception.localizedMessage}")
-                        }
-                        else -> {
-                            Text("Unknown state")
-                        }
+                        )
                     }
                 }
             }
-
         }
-
     }
 }
 
 @Composable
-fun ChatItem(chat: Chat, user: User?, onClick: () -> Unit) {
-    val participants = chat.participants
-    val participantNames = participants.joinToString(", ")
-    val lastMessagePreview = chat.lastMessage.take(50)
-    val timestamp = chat.lastMessageTimestamp.toDate().toString()
-
+fun ChatListItem(
+    chatWithUser: ChatWithUser,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onClick() },
-        shape = MaterialTheme.shapes.medium,
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .height(72.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
-                    .border(2.dp, Color.White, CircleShape)
-                    .background(Color.Gray)
+                    .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
             ) {
-                val painter = rememberAsyncImagePainter(model = user?.imageUrl?.ifEmpty { "https://cdn.pixabay.com/photo/2014/03/25/16/24/female-296989_1280.png" })
-                val painterState = painter.state
+                val painter = rememberAsyncImagePainter(
+                    model = chatWithUser.otherUser.imageUrl.ifEmpty {
+                        "https://cdn.pixabay.com/photo/2014/03/25/16/24/female-296989_1280.png"
+                    }
+                )
                 Image(
                     painter = painter,
-                    contentDescription = "Profile Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
-                if (painterState is AsyncImagePainter.State.Loading) {
+                
+                if (painter.state is AsyncImagePainter.State.Loading) {
                     CircularProgressIndicator(
                         modifier = Modifier
+                            .size(24.dp)
                             .align(Alignment.Center)
-                            .size(32.dp)
-                    )
-                }
-
-                if (painterState is AsyncImagePainter.State.Error) {
-                    Text(
-                        text = "X",
-                        color = Color.Red,
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
             }
-            Spacer(modifier = Modifier.width(12.dp))
+
+            Spacer(modifier = Modifier.width(16.dp))
 
             Column(
-                modifier = Modifier
-                    .fillMaxHeight()
+                modifier = Modifier.weight(1f)
             ) {
-                if (user != null) {
-                    Text(
-                        text = user.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = lastMessagePreview,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = chatWithUser.otherUser.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
+                
                 Spacer(modifier = Modifier.height(4.dp))
+                
                 Text(
-                    text = timestamp,
-                    style = MaterialTheme.typography.bodySmall,
+                    text = chatWithUser.chat.lastMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = formatTimestamp(chatWithUser.chat.lastMessageTimestamp.toDate()),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+private fun formatTimestamp(date: Date): String {
+    val now = Calendar.getInstance()
+    val messageTime = Calendar.getInstance().apply { time = date }
+
+    return when {
+        now.get(Calendar.DATE) == messageTime.get(Calendar.DATE) -> {
+            SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+        }
+        now.get(Calendar.YEAR) == messageTime.get(Calendar.YEAR) -> {
+            SimpleDateFormat("MMM dd", Locale.getDefault()).format(date)
+        }
+        else -> {
+            SimpleDateFormat("MM/dd/yy", Locale.getDefault()).format(date)
         }
     }
 }
