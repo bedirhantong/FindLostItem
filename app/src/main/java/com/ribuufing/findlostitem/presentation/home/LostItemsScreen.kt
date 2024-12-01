@@ -212,10 +212,6 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-//                user?.uid?.takeIf { it != item.senderInfo.senderId }?.let {
-//
-//                }
-
                 navController.navigate("item_detail/${item.itemId}")
 
             }
