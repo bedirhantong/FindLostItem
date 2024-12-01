@@ -65,7 +65,9 @@ fun ReportFoundItemScreen(
                     title = { Text("New Post") },
                     navigationIcon = {
                         IconButton(
-                            onClick = { navController.popBackStack() },
+                            onClick = {
+                                navController.popBackStack()
+                            },
                             enabled = sendStatus != SendStatus.Sending
                         ) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Back")

@@ -48,7 +48,9 @@ fun MapScreen(
         )
 
         MapTopAppBar(
-            navController = navController,
+            onBackClick = {
+                navController.popBackStack()
+            },
             scrollState = scrollState.value
         )
 
