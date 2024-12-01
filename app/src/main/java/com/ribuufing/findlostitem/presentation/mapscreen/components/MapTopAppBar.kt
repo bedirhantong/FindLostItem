@@ -20,10 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapTopAppBar(
-    navController: NavController,
+    onBackClick: () -> Unit,
     scrollState: Float
 ) {
     var isVisible by remember { mutableStateOf(true) }
@@ -58,8 +57,9 @@ fun MapTopAppBar(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 IconButton(
-                    onClick = { navController.navigateUp() },
+                    onClick = onBackClick,
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
