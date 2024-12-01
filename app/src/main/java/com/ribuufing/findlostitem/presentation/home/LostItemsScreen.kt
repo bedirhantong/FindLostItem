@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
@@ -46,6 +47,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImagePainter
@@ -204,16 +207,16 @@ fun LostItemsScreen(
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: NavHostController,user: User?) {
+fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: NavHostController, user: User?) {
     var upvoteCount by remember { mutableIntStateOf(item.numOfUpVotes) }
     var downvoteCount by remember { mutableIntStateOf(item.numOfDownVotes) }
+    var selectedImageUrl by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
                 navController.navigate("item_detail/${item.itemId}")
-
             }
             .padding(10.dp)
             .border(
@@ -227,6 +230,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(bottom = 8.dp),
         )
+        
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -235,7 +239,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         painter = painterResource(id = R.drawable.from_icon),
-                        contentDescription = "Placed Location icon",
+                        contentDescription = "Found Location icon",
                         modifier = Modifier.size(16.dp),
                         tint = Color(0xFF58B437)
                     )
@@ -285,64 +289,71 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
         )
 
         if (item.images.isNotEmpty()) {
-            val pagerState = rememberPagerState()
+            val imageCount = item.images.size
+            val displayCount = minOf(imageCount, 4)
+            val rows = (displayCount + 1) / 2
+            
             Column {
-                HorizontalPager(
-                    count = item.images.size,
-                    state = pagerState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(350.dp)
-                ) { page ->
-                    val painter = rememberAsyncImagePainter(model = item.images[page])
-                    val painterState = painter.state
-
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Image(
-                            painter = painter,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit
-                        )
-
-                        // Placeholder or Loading indicator
-                        if (painterState is AsyncImagePainter.State.Loading) {
-                            CircularProgressIndicator(
+                for (row in 0 until rows) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(if (displayCount == 1) 350.dp else 175.dp)
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val startIndex = row * 2
+                        val endIndex = minOf(startIndex + 2, displayCount)
+                        
+                        for (i in startIndex until endIndex) {
+                            val weight = if (displayCount == 1) 1f else 0.5f
+                            Box(
                                 modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .size(32.dp)
-                            )
-                        }
+                                    .weight(weight)
+                                    .fillMaxHeight()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { selectedImageUrl = item.images[i] }
+                            ) {
+                                val painter = rememberAsyncImagePainter(model = item.images[i])
+                                Image(
+                                    painter = painter,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                                
+                                if (painter.state is AsyncImagePainter.State.Loading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .size(32.dp)
+                                    )
+                                }
+                                
+                                if (painter.state is AsyncImagePainter.State.Error) {
+                                    Text(
+                                        text = "Failed to load image",
+                                        color = Color.Red,
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
+                                }
 
-                        // Error indicator
-                        if (painterState is AsyncImagePainter.State.Error) {
-                            Text(
-                                text = "Failed to load image.",
-                                color = Color.Red,
-                                modifier = Modifier.align(Alignment.Center)
-                            )
-                        }
-                    }
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .fillMaxWidth()
-                ) {
-                    repeat(item.images.size) { index ->
-                        val color =
-                            if (index == pagerState.currentPage) Color.Black else Color.LightGray
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .padding(2.dp)
-                        )
-                        if (index < item.images.size - 1) {
-                            Spacer(modifier = Modifier.width(4.dp))
+                                if (i == 3 && imageCount > 4) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = 0.6f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "+${imageCount - 4}",
+                                            color = Color.White,
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -384,8 +395,7 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
             Spacer(modifier = Modifier.width(4.dp))
             Text(text = downvoteCount.toString(), modifier = Modifier.wrapContentWidth())
             IconButton(
-                onClick = {
-                },
+                onClick = { },
                 modifier = Modifier.wrapContentWidth()
             ) {
                 Icon(
@@ -393,6 +403,14 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
                     contentDescription = "Share button"
                 )
             }
+        }
+
+        selectedImageUrl?.let { imageUrl ->
+            ImagePreviewDialog(
+                imageUrl = imageUrl,
+                onDismiss = { selectedImageUrl = null },
+                item = item
+            )
         }
     }
 }
@@ -501,5 +519,98 @@ fun ShimmerEffect(
                 .height(30.dp)
                 .background(brush)
         )
+    }
+}
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun ImagePreviewDialog(
+    imageUrl: String,
+    onDismiss: () -> Unit,
+    item: LostItem
+) {
+    val pagerState = rememberPagerState(
+        initialPage = item.images.indexOf(imageUrl)
+    )
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.9f))
+        ) {
+            HorizontalPager(
+                count = item.images.size,
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(onClick = onDismiss)
+                ) {
+                    val painter = rememberAsyncImagePainter(
+                        model = item.images[page]
+                    )
+                    
+                    Image(
+                        painter = painter,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center),
+                        contentScale = ContentScale.Fit
+                    )
+
+                    if (painter.state is AsyncImagePainter.State.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .size(48.dp),
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            // Sayfa göstergesi
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${pagerState.currentPage + 1}/${item.images.size}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            // Kapatma butonu
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close preview",
+                    tint = Color.White
+                )
+            }
+        }
     }
 }
