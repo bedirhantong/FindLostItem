@@ -68,6 +68,8 @@ import com.ribuufing.findlostitem.utils.Result
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -192,6 +194,8 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
     
     // Sender bilgilerini al
     val senderInfo by viewModel.getSenderInfo(item.senderInfo.senderId).collectAsState()
+
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -421,7 +425,15 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
                 }
             }
 
-            IconButton(onClick = { }) {
+            IconButton(
+                onClick = {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, item.toShareText())
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Share Lost Item"))
+                }
+            ) {
                 Icon(
                     painter = painterResource(id = R.drawable.share_02_svgrepo_com),
                     contentDescription = "Share",
@@ -638,5 +650,21 @@ fun ImagePreviewDialog(
                 )
             }
         }
+    }
+}
+
+fun LostItem.toShareText(): String {
+    return buildString {
+        appendLine("🔍 Lost Item Details")
+        appendLine("📦 Item: $itemName")
+        appendLine("📝 Description: $message")
+        appendLine()
+        appendLine("📍 Found at: $foundWhere")
+        appendLine("📍 Placed at: $placedWhere")
+        appendLine()
+        appendLine("⏰ Date: ${formatTimestamp(timestamp)}")
+        appendLine()
+        appendLine("If you have any information about this item, please contact through the app.")
+        appendLine("Download Find Lost Item app to help others find their lost items!")
     }
 }

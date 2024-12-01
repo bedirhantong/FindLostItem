@@ -7,6 +7,7 @@ agp = "8.6.0"
 bom = "2024.04.01"
 coilCompose = "2.2.2"
 converterGson = "2.11.0"
+coreSplashscreen = "1.0.1"
 firebaseBom = "33.4.0"
 firebaseCrashlyticsGradle = "3.0.2"
 googleServices = "4.4.2"
@@ -50,6 +51,7 @@ accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiper
 androidx-activity-compose-v193 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
 androidx-bom = { module = "androidx.compose:bom", version.ref = "bom" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltCompiler" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltCompiler" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }

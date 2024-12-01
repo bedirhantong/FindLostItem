@@ -126,4 +126,7 @@ dependencies {
     // Maps Compose Library (optional if you are using Compose with Maps)
     implementation (libs.maps.compose)
 
+
+    // Splash API
+    implementation(libs.androidx.core.splashscreen)
 }
