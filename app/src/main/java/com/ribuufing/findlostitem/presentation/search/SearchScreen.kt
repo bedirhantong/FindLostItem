@@ -111,7 +111,7 @@ fun SearchScreen(
                                 item = item,
                                 viewModel = hiltViewModel(),
                                 navController = navController,
-                                user = null
+
                             )
                         }
                     }

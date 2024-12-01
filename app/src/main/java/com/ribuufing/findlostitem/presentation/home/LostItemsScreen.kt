@@ -51,6 +51,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -75,29 +76,21 @@ fun LostItemsScreen(
     viewModel: LostItemsViewModel = hiltViewModel(),
     navController: NavHostController,
 ) {
-    val lostItems by viewModel.filteredLostItems.collectAsState()
+    val lostItems by viewModel.lostItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
     val isInternetAvailable by noInternetViewModel.isInternetAvailable
     val openDialog = remember { mutableStateOf(false) }
 
-    val user = when (val userInfoState = viewModel.userInfos.collectAsState().value) {
-        is Result.Success -> userInfoState.data
-        is Result.Failure -> null
-        else -> null
-    }
-
     LaunchedEffect(Unit) {
         viewModel.fetchLostItems()
-        viewModel.getUserInfosByUid()
         noInternetViewModel.checkInternetConnection()
     }
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
             viewModel.fetchLostItems()
-            viewModel.getUserInfosByUid()
             isRefreshing = false
         }
     }
@@ -137,64 +130,49 @@ fun LostItemsScreen(
                 }
             )
         },
-        content = {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(it)
-            ) { SwipeRefresh(
-                    state = swipeRefreshState,
-                    onRefresh = { isRefreshing = true },
-                    indicator = { state, trigger ->
-                        SwipeRefreshIndicator(
-                            state = state,
-                            refreshTriggerDistance = trigger,
-                            contentColor = MaterialTheme.colorScheme.primary,
-                            backgroundColor = MaterialTheme.colorScheme.background,
-                            elevation = 8.dp,
-                        )
-                    }
-                ) {
-                    val offsetY =
-                        min(swipeRefreshState.indicatorOffset.dp, 80.dp)
-
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        if (isLoading) {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .offset(y = offsetY)
+        content = { paddingValues ->
+            SwipeRefresh(
+                state = swipeRefreshState,
+                onRefresh = { isRefreshing = true },
+                indicator = { state, trigger ->
+                    SwipeRefreshIndicator(
+                        state = state,
+                        refreshTriggerDistance = trigger,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        backgroundColor = MaterialTheme.colorScheme.background
+                    )
+                }
+            ) {
+                Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                    if (isLoading) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(5) {
+                                ShimmerEffect(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .wrapContentSize()
+                                )
+                            }
+                        }
+                    } else {
+                        if (lostItems.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
                             ) {
-                                items(5) {
-                                    ShimmerEffect(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .wrapContentSize()
-                                    )
-                                }
+                                Text(
+                                    "No items found",
+                                    style = MaterialTheme.typography.titleLarge
+                                )
                             }
                         } else {
-                            if (lostItems.isEmpty()) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .offset(y = offsetY),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        "Gönderiler bulunamadı",
-                                        style = MaterialTheme.typography.titleLarge
-                                    )
-                                }
-                            } else {
-                                LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .offset(y = offsetY)
-                                ) {
-                                    items(lostItems) { item ->
-                                        LostItemRow(item, viewModel, navController,user)
-                                    }
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(lostItems) { item ->
+                                    LostItemRow(item, viewModel, navController)
                                 }
                             }
                         }
@@ -207,200 +185,248 @@ fun LostItemsScreen(
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: NavHostController, user: User?) {
+fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: NavHostController) {
     var upvoteCount by remember { mutableIntStateOf(item.numOfUpVotes) }
     var downvoteCount by remember { mutableIntStateOf(item.numOfDownVotes) }
     var selectedImageUrl by remember { mutableStateOf<String?>(null) }
+    
+    // Sender bilgilerini al
+    val senderInfo by viewModel.getSenderInfo(item.senderInfo.senderId).collectAsState()
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                navController.navigate("item_detail/${item.itemId}")
-            }
-            .padding(10.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .border(
-                border = BorderStroke(0.1.dp, Color.Gray),
-                shape = MaterialTheme.shapes.small
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .background(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable(
+                onClick = {
+                    navController.navigate("item_detail/${item.itemId}")
+                }
             )
             .padding(16.dp)
     ) {
-        Text(
-            text = item.itemName,
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.from_icon),
-                        contentDescription = "Found Location icon",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color(0xFF58B437)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = item.foundWhere,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF99704D)
-                    )
-                }
-
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More icon",
-                    modifier = Modifier.size(16.dp)
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.placed_icon),
-                        contentDescription = "Placed Location icon",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color(0xFFD72224)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = item.placedWhere,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF99704D)
-                    )
-                }
-            }
-
+            Text(
+                text = item.itemName,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.weight(1f)
+            )
+            
             Text(
                 text = formatTimestamp(item.timestamp),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF99704D)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = item.message,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(bottom = 8.dp)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+            modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        if (item.images.isNotEmpty()) {
-            val imageCount = item.images.size
-            val displayCount = minOf(imageCount, 4)
-            val rows = (displayCount + 1) / 2
-            
-            Column {
-                for (row in 0 until rows) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(if (displayCount == 1) 350.dp else 175.dp)
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val startIndex = row * 2
-                        val endIndex = minOf(startIndex + 2, displayCount)
-                        
-                        for (i in startIndex until endIndex) {
-                            val weight = if (displayCount == 1) 1f else 0.5f
-                            Box(
-                                modifier = Modifier
-                                    .weight(weight)
-                                    .fillMaxHeight()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable { selectedImageUrl = item.images[i] }
-                            ) {
-                                val painter = rememberAsyncImagePainter(model = item.images[i])
-                                Image(
-                                    painter = painter,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                                
-                                if (painter.state is AsyncImagePainter.State.Loading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier
-                                            .align(Alignment.Center)
-                                            .size(32.dp)
-                                    )
-                                }
-                                
-                                if (painter.state is AsyncImagePainter.State.Error) {
-                                    Text(
-                                        text = "Failed to load image",
-                                        color = Color.Red,
-                                        modifier = Modifier.align(Alignment.Center)
-                                    )
-                                }
+        Column(
+            modifier = Modifier.padding(bottom = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(id = R.drawable.from_icon),
+                    contentDescription = "Found Location icon",
+                    modifier = Modifier.size(16.dp),
+                    tint = Color(0xFF58B437)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = item.foundWhere,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF99704D)
+                )
+            }
 
-                                if (i == 3 && imageCount > 4) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color.Black.copy(alpha = 0.6f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "+${imageCount - 4}",
-                                            color = Color.White,
-                                            style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Bold
-                                        )
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "More icon",
+                modifier = Modifier.size(16.dp)
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(id = R.drawable.placed_icon),
+                    contentDescription = "Placed Location icon",
+                    modifier = Modifier.size(16.dp),
+                    tint = Color(0xFFD72224)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = item.placedWhere,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF99704D)
+                )
+            }
+        }
+
+        if (item.images.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    val imageCount = item.images.size
+                    val displayCount = minOf(imageCount, 4)
+                    val rows = (displayCount + 1) / 2
+                    
+                    for (row in 0 until rows) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(if (displayCount == 1) 350.dp else 175.dp),
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            val startIndex = row * 2
+                            val endIndex = minOf(startIndex + 2, displayCount)
+                            
+                            for (i in startIndex until endIndex) {
+                                val weight = if (displayCount == 1) 1f else 0.5f
+                                Box(
+                                    modifier = Modifier
+                                        .weight(weight)
+                                        .fillMaxHeight()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { selectedImageUrl = item.images[i] }
+                                ) {
+                                    val painter = rememberAsyncImagePainter(model = item.images[i])
+                                    Image(
+                                        painter = painter,
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    
+                                    if (i == 3 && imageCount > 4) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.Black.copy(alpha = 0.6f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "+${imageCount - 4}",
+                                                color = Color.White,
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                        .background(
+                            Color.Black.copy(alpha = 0.6f),
+                            RoundedCornerShape(4.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = when (senderInfo) {
+                            is Result.Success -> "Found by ${(senderInfo as Result.Success<User?>).data?.name ?: "Anonymous"}"
+                            is Result.Failure -> "Found by Anonymous"
+                            else -> "Found by Anonymous"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White
+                    )
+                }
             }
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(
-                onClick = {
-                    viewModel.upvoteItem(item.itemId.toString(), upvoteCount)
-                    upvoteCount++
-                },
-                modifier = Modifier.wrapContentWidth()
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = "Upvote button"
-                )
-            }
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(text = upvoteCount.toString(), modifier = Modifier.wrapContentWidth())
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = {
+                            viewModel.upvoteItem(item.itemId, upvoteCount)
+                            upvoteCount++
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.thumb_up_like_svgrepo_com),
+                            contentDescription = "Upvote",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Text(
+                        text = upvoteCount.toString(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
 
-            IconButton(
-                onClick = {
-                    viewModel.downVoteItem(item.itemId.toString(), downvoteCount)
-                    downvoteCount--
-                },
-                modifier = Modifier.wrapContentWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Downvote button"
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = {
+                            viewModel.downVoteItem(item.itemId, downvoteCount)
+                            downvoteCount--
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.thumb_down_svgrepo_com),
+                            contentDescription = "Downvote",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    Text(
+                        text = downvoteCount.toString(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(text = downvoteCount.toString(), modifier = Modifier.wrapContentWidth())
-            IconButton(
-                onClick = { },
-                modifier = Modifier.wrapContentWidth()
-            ) {
+
+            IconButton(onClick = { }) {
                 Icon(
-                    imageVector = Icons.Default.Share,
-                    contentDescription = "Share button"
+                    painter = painterResource(id = R.drawable.share_02_svgrepo_com),
+                    contentDescription = "Share",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
         }
