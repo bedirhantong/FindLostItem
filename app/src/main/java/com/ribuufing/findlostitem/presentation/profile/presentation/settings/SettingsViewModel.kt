@@ -18,9 +18,6 @@ class SettingsViewModel @Inject constructor(
     private val _logoutState = MutableStateFlow<Result<Unit>?>(null)
     val logoutState: StateFlow<Result<Unit>?> = _logoutState
 
-    private val _deleteAccountState = MutableStateFlow<Result<Unit>?>(null)
-    val deleteAccountState: StateFlow<Result<Unit>?> = _deleteAccountState
-
     fun logout() {
         viewModelScope.launch {
             logoutUseCase().collect { result ->

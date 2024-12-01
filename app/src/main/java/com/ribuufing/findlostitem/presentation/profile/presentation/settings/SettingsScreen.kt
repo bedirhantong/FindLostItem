@@ -2,6 +2,7 @@ package com.ribuufing.findlostitem.presentation.profile.presentation.settings
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ArrowBack
@@ -26,7 +27,7 @@ import com.ribuufing.findlostitem.navigation.BottomNavigationItems
 import com.ribuufing.findlostitem.navigation.Routes
 import com.ribuufing.findlostitem.utils.Result
 
-@OptIn(ExperimentalMaterial3Api::class) // Use Material3
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -34,8 +35,6 @@ fun SettingsScreen(
 ) {
     val logoutState by viewModel.logoutState.collectAsState()
     val context = LocalContext.current
-
-    // State for showing/hiding the logout confirmation dialog
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(logoutState) {
@@ -57,17 +56,26 @@ fun SettingsScreen(
         }
     }
 
-    // Main screen scaffold with app bar
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Settings") },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFED822B),
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                title = { 
+                    Text(
+                        "Settings",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                },
+                colors = TopAppBarDefaults.largeTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(
+                        onClick = { navController.popBackStack() }
+                    ) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -78,52 +86,108 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
         ) {
-            // Account settings section
             SettingsCategory(
-                title = "Account Settings",
+                title = "Account",
                 items = listOf(
                     SettingsItem(
-                        label = "Profile",
-                        description = "View and edit profile",
-                        onClick = { /* Navigate to profile settings */ },
-                        icon = { Icon(Icons.Default.Person, contentDescription = "Profile") }
+                        label = "Profile Settings",
+                        description = "Update your profile information",
+                        onClick = { },
+                        icon = { 
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                tint = Color(0xFFED822B)
+                            )
+                        }
                     ),
                     SettingsItem(
-                        label = "Log Out",
-                        description = "Log out of the app",
-                        onClick = { showLogoutDialog = true },
-                        icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Log Out") },
-                        highlighted = true
+                        label = "Notifications",
+                        description = "Manage your notifications",
+                        onClick = { },
+                        icon = { 
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = null,
+                                tint = Color(0xFFED822B)
+                            )
+                        }
                     )
                 )
             )
 
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Preferences and other sections can follow...
+            SettingsCategory(
+                title = "App Settings",
+                items = listOf(
+                    SettingsItem(
+                        label = "Log Out",
+                        description = "Sign out of your account",
+                        onClick = { showLogoutDialog = true },
+                        icon = { 
+                            Icon(
+                                Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = null,
+                                tint = Color(0xFFED822B)
+                            )
+                        },
+                        highlighted = true
+                    )
+                )
+            )
+        }
 
-            // Show the logout confirmation dialog when needed
-            if (showLogoutDialog) {
-                AlertDialog(
-                    onDismissRequest = { showLogoutDialog = false },
-                    title = { Text("Confirm Logout") },
-                    text = { Text("Are you sure you want to log out?") },
-                    confirmButton = {
-                        TextButton(onClick = {
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { showLogoutDialog = false },
+                icon = { 
+                    Icon(
+                        Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = null,
+                        tint = Color(0xFFED822B)
+                    )
+                },
+                title = { 
+                    Text(
+                        "Log Out",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                },
+                text = { 
+                    Text(
+                        "Are you sure you want to log out?",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
                             viewModel.logout()
                             showLogoutDialog = false
-                        }) {
-                            Text("Yes")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showLogoutDialog = false }) {
-                            Text("No")
-                        }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFED822B)
+                        )
+                    ) {
+                        Text("Log Out")
                     }
-                )
-            }
+                },
+                dismissButton = {
+                    OutlinedButton(
+                        onClick = { showLogoutDialog = false },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFFED822B)
+                        )
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
@@ -133,45 +197,69 @@ fun SettingsCategory(title: String, items: List<SettingsItem>) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(vertical = 8.dp),
-            color = Color(0xFFED822B)
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFED822B)
+            ),
+            modifier = Modifier.padding(vertical = 12.dp)
         )
-        items.forEach { item ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (item.highlighted) Color(0xFFED822B).copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                ),
-                elevation = CardDefaults.elevatedCardElevation(),
-                onClick = item.onClick
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 2.dp
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    item.icon()
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = item.label,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = if (item.highlighted) FontWeight.Bold else FontWeight.Normal
-                        )
-                        item.description?.let {
-                            Text(
-                                text = it,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                items.forEachIndexed { index, item ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = item.onClick,
+                        color = if (item.highlighted) 
+                            Color(0xFFED822B).copy(alpha = 0.1f) 
+                        else 
+                            MaterialTheme.colorScheme.surface
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            item.icon()
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = item.label,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = if (item.highlighted) 
+                                            FontWeight.Bold 
+                                        else 
+                                            FontWeight.Normal
+                                    )
+                                )
+                                item.description?.let {
+                                    Text(
+                                        text = it,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
+                    if (index < items.size - 1) {
+                        Divider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        )
+                    }
                 }
             }
         }
@@ -181,7 +269,7 @@ fun SettingsCategory(title: String, items: List<SettingsItem>) {
 data class SettingsItem(
     val label: String,
     val description: String? = null,
-    val onClick: () -> Unit, // This is a lambda function, not a Composable
+    val onClick: () -> Unit,
     val icon: @Composable () -> Unit,
     val highlighted: Boolean = false
 )
