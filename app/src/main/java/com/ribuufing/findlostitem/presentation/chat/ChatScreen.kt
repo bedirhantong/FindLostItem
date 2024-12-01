@@ -2,15 +2,10 @@ package com.ribuufing.findlostitem.presentation.chat
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,11 +13,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,182 +29,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ribuufing.findlostitem.data.model.Message
 import com.ribuufing.findlostitem.utils.Result
 import androidx.navigation.NavHostController
-import com.google.firebase.Timestamp
 import com.ribuufing.findlostitem.data.model.LostItem
-import java.text.SimpleDateFormat
-import java.util.Locale
 import coil.compose.AsyncImage
+import com.ribuufing.findlostitem.presentation.chat.components.ChatBubble
+import com.ribuufing.findlostitem.presentation.chat.components.MessageInputField
 import com.ribuufing.findlostitem.presentation.home.formatTimestamp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-@Composable
-fun MessageInputField(
-    messageText: String,
-    onMessageChange: (String) -> Unit,
-    onSendClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(32.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 4.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(4.dp)
-                .height(56.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = {
-                    // TODO : Implement attachment functionality as in whatsapp
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add attachment",
-                    tint = Color(0xFFED822B)
-                )
-            }
-
-            TextField(
-                value = messageText,
-                onValueChange = onMessageChange,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
-                placeholder = {
-                    Text(
-                        "Type a message...",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                },
-                textStyle = MaterialTheme.typography.bodyLarge
-            )
-
-            AnimatedVisibility(
-                visible = messageText.isNotBlank(),
-                enter = fadeIn() + scaleIn(),
-                exit = fadeOut() + scaleOut()
-            ) {
-                IconButton(
-                    onClick = onSendClick,
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .size(40.dp)
-                        .background(Color(0xFFED822B), CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = "Send message",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ChatBubble(
-    message: Message,
-    isCurrentUser: Boolean,
-    userImage: String?,
-    userName: String
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp, horizontal = 8.dp)
-    ) {
-        if (!isCurrentUser) {
-            Text(
-                text = userName,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 44.dp, bottom = 2.dp)
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
-        ) {
-            if (!isCurrentUser) {
-                AsyncImage(
-                    model = userImage,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .border(1.dp, Color(0xFFED822B), CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-
-            Surface(
-                color = if (isCurrentUser) Color(0xFFED822B) else MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(
-                    topStart = if (isCurrentUser) 16.dp else 4.dp,
-                    topEnd = if (isCurrentUser) 4.dp else 16.dp,
-                    bottomStart = 16.dp,
-                    bottomEnd = 16.dp
-                ),
-                tonalElevation = 2.dp
-            ) {
-                Column(
-                    modifier = Modifier
-                        .widthIn(max = 260.dp)
-                        .padding(12.dp)
-                ) {
-                    Text(
-                        text = message.content,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = if (isCurrentUser) Color.White 
-                               else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    Text(
-                        text = message.timestamp.formatToReadableTime(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isCurrentUser) Color.White.copy(alpha = 0.7f)
-                               else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        modifier = Modifier
-                            .align(Alignment.End)
-                            .padding(top = 4.dp)
-                    )
-                }
-            }
-
-            if (isCurrentUser) {
-                Spacer(modifier = Modifier.width(8.dp))
-                AsyncImage(
-                    model = userImage,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .border(1.dp, Color(0xFFED822B), CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            }
-        }
-    }
-}
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -501,9 +325,4 @@ fun ChatScreen(
             }
         }
     }
-}
-
-private fun Timestamp.formatToReadableTime(): String {
-    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-    return sdf.format(this.toDate())
 }
