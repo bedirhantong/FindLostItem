@@ -40,7 +40,10 @@ fun DmChatScreen(
     val chatWithUsers by viewModel.chatWithUsers.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    Log.d("DmChatScreen", "Recomposing with isLoading: $isLoading, chats count: ${chatWithUsers.size}")
+    Log.d(
+        "DmChatScreen",
+        "Recomposing with isLoading: $isLoading, chats count: ${chatWithUsers.size}"
+    )
 
     Scaffold(
         topBar = {
@@ -67,17 +70,17 @@ fun DmChatScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (isLoading) {
-                Log.d("DmChatScreen", "Showing loading indicator")
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else if (chatWithUsers.isEmpty()) {
+            if (chatWithUsers.isEmpty()) {
                 Log.d("DmChatScreen", "No chats available")
                 Text(
                     text = "No messages yet",
                     modifier = Modifier.align(Alignment.Center),
                     style = MaterialTheme.typography.bodyLarge
+                )
+            } else if (isLoading) {
+                Log.d("DmChatScreen", "Showing loading indicator")
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
                 )
             } else {
                 Log.d("DmChatScreen", "Showing chat list with ${chatWithUsers.size} items")
@@ -85,7 +88,10 @@ fun DmChatScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(chatWithUsers) { chatWithUser ->
-                        Log.d("DmChatScreen", "Rendering chat item for user: ${chatWithUser.otherUser.name}")
+                        Log.d(
+                            "DmChatScreen",
+                            "Rendering chat item for user: ${chatWithUser.otherUser.name}"
+                        )
                         ChatListItem(
                             chatWithUser = chatWithUser,
                             onClick = {
@@ -137,7 +143,7 @@ fun ChatListItem(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                
+
                 if (painter.state is AsyncImagePainter.State.Loading) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -157,9 +163,9 @@ fun ChatListItem(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
+
                 Text(
                     text = chatWithUser.chat.lastMessage,
                     style = MaterialTheme.typography.bodyMedium,
@@ -188,9 +194,11 @@ private fun formatTimestamp(date: Date): String {
         now.get(Calendar.DATE) == messageTime.get(Calendar.DATE) -> {
             SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
         }
+
         now.get(Calendar.YEAR) == messageTime.get(Calendar.YEAR) -> {
             SimpleDateFormat("MMM dd", Locale.getDefault()).format(date)
         }
+
         else -> {
             SimpleDateFormat("MM/dd/yy", Locale.getDefault()).format(date)
         }
