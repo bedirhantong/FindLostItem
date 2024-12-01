@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Create
@@ -30,6 +31,7 @@ import coil.compose.AsyncImage
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
+import com.ribuufing.findlostitem.navigation.BottomNavigationItems
 import com.ribuufing.findlostitem.navigation.Routes
 import com.ribuufing.findlostitem.presentation.home.formatTimestamp
 import com.ribuufing.findlostitem.presentation.lostitemdetail.components.ItemLocationMap
@@ -53,27 +55,23 @@ fun LostItemDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
-                    Text(
-                        text = lostItem?.itemName ?: "Item not found",
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                },
+                title = { Text("Item Details") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(
+                        onClick = {
+                            navController.navigate(BottomNavigationItems.Home.route) {
+                                popUpTo(BottomNavigationItems.Home.route) {
+                                    inclusive = true
+                                }
+                            }
+                        }
+                    ) {
                         Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
+                            imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
-                },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
-                )
+                }
             )
         }
     ) { paddingValues ->
