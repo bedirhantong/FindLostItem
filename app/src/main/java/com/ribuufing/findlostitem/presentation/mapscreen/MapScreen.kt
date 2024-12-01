@@ -1,5 +1,9 @@
 package com.ribuufing.findlostitem.presentation.mapscreen
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -7,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.google.android.gms.maps.model.CameraPosition
@@ -34,6 +39,27 @@ fun MapScreen(
     
     val cameraPositionState = rememberCameraPositionState()
     val scrollState = remember { mutableStateOf(0f) }
+    val context = LocalContext.current
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasLocationPermission = isGranted
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasLocationPermission) {
+            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
 
     LaunchedEffect(cameraPositionState.position) {
         scrollState.value = (cameraPositionState.position.bearing / 360f).coerceIn(0f, 1f)
@@ -44,7 +70,8 @@ fun MapScreen(
             clusters = clusters,
             onMarkerClick = viewModel::onMapClick,
             viewModel = viewModel,
-            cameraPositionState = cameraPositionState
+            cameraPositionState = cameraPositionState,
+            hasLocationPermission = hasLocationPermission
         )
 
         MapTopAppBar(
@@ -74,7 +101,8 @@ private fun MapContent(
     clusters: List<Cluster>,
     onMarkerClick: (Location) -> Unit,
     viewModel: MapViewModel,
-    cameraPositionState: CameraPositionState
+    cameraPositionState: CameraPositionState,
+    hasLocationPermission: Boolean
 ) {
     val akdenizUniversityBounds = listOf(
         LatLng(36.88647221734685, 30.662544051047327),
@@ -102,7 +130,7 @@ private fun MapContent(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
         properties = MapProperties(
-            isMyLocationEnabled = true,
+            isMyLocationEnabled = hasLocationPermission,
             mapStyleOptions = MapStyleOptions.loadRawResourceStyle(
                 LocalContext.current,
                 R.raw.map_style
@@ -110,7 +138,7 @@ private fun MapContent(
         ),
         uiSettings = MapUiSettings(
             zoomControlsEnabled = true,
-            myLocationButtonEnabled = false,
+            myLocationButtonEnabled = hasLocationPermission,
             mapToolbarEnabled = false
         )
     ) {
