@@ -19,12 +19,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,8 +47,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -62,9 +64,12 @@ import com.ribuufing.findlostitem.R
 import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.presentation.nointernet.NoInternetScreen
 import com.ribuufing.findlostitem.presentation.nointernet.NoInternetViewModel
-import com.ribuufing.findlostitem.presentation.profile.presentation.ProfileContent
 import com.ribuufing.findlostitem.utils.Result
-import kotlinx.coroutines.launch
+import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
+import java.util.Locale
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,32 +78,23 @@ fun LostItemsScreen(
     viewModel: LostItemsViewModel = hiltViewModel(),
     navController: NavHostController,
 ) {
-    val lostItems by viewModel.filteredLostItems.collectAsState()
+    val lostItems by viewModel.lostItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
     val isInternetAvailable by noInternetViewModel.isInternetAvailable
     val openDialog = remember { mutableStateOf(false) }
 
-    val user = when (val userInfoState = viewModel.userInfos.collectAsState().value) {
-        is Result.Success -> userInfoState.data
-        is Result.Failure -> {
-            // Hata durumu için yapılacak işlemler
-            null
-        }
-        else -> null // Diğer durumlar için de null
+    LaunchedEffect(Unit) {
+        viewModel.fetchLostItems()
+        noInternetViewModel.checkInternetConnection()
     }
-
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
-            viewModel.refreshLostItems()
+            viewModel.fetchLostItems()
             isRefreshing = false
         }
-    }
-
-    LaunchedEffect(Unit) {
-        noInternetViewModel.checkInternetConnection()
     }
 
     if (!isInternetAvailable) {
@@ -125,9 +121,7 @@ fun LostItemsScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = {
-                        navController.navigate("dmChatScreen")
-                    }) {
+                    IconButton(onClick = { navController.navigate("dmChatScreen") }) {
                         Icon(
                             painter = painterResource(id = R.drawable.dm),
                             contentDescription = "Direct Message",
@@ -138,101 +132,49 @@ fun LostItemsScreen(
                 }
             )
         },
-        content = {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(it)
+        content = { paddingValues ->
+            SwipeRefresh(
+                state = swipeRefreshState,
+                onRefresh = { isRefreshing = true },
+                indicator = { state, trigger ->
+                    SwipeRefreshIndicator(
+                        state = state,
+                        refreshTriggerDistance = trigger,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        backgroundColor = MaterialTheme.colorScheme.background
+                    )
+                }
             ) {
-                OutlinedTextField(
-                    value = viewModel.searchQuery.collectAsState().value,
-                    onValueChange = { viewModel.updateSearchQuery(it) },
-                    label = {
-                        Text(
-                            "Search for items",
-                            style = TextStyle(
-                                color = Color(0xFF99704D),
-                                fontWeight = FontWeight.Normal
-                            )
-                        )
-                    }, // Etiket metnini güncelle
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 7.dp, end = 7.dp, top = 7.dp, bottom = 12.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    prefix = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search icon",
-                            tint = Color(0xFF99704D)
-                        )
-                    },
-                    maxLines = 1,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        cursorColor = Color(0xFFED822B),
-                        focusedBorderColor = Color(0xFFED822B),
-                        focusedPrefixColor = Color(0xFFED822B),
-                        unfocusedBorderColor = Color.Gray,
-                        focusedLabelColor = Color(0xFFED822B),
-                        focusedTextColor = Color(0xFF99704D),
-                    ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
-                )
-
-                // SwipeRefresh
-                SwipeRefresh(
-                    state = swipeRefreshState,
-                    onRefresh = { isRefreshing = true },
-                    indicator = { state, trigger ->
-                        SwipeRefreshIndicator(
-                            state = state,
-                            refreshTriggerDistance = trigger,
-                            contentColor = MaterialTheme.colorScheme.primary,
-                            backgroundColor = MaterialTheme.colorScheme.background,
-                            elevation = 8.dp,
-                        )
-                    }
-                ) {
-                    val offsetY =
-                        min(swipeRefreshState.indicatorOffset.dp, 80.dp) // Cap the movement
-
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        if (isLoading) {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .offset(y = offsetY)
+                Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                    if (isLoading) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(5) {
+                                ShimmerEffect(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .wrapContentSize()
+                                )
+                            }
+                        }
+                    } else {
+                        if (lostItems.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
                             ) {
-                                items(5) {
-                                    ShimmerEffect(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .wrapContentSize()
-                                    )
-                                }
+                                Text(
+                                    "No items found",
+                                    style = MaterialTheme.typography.titleLarge
+                                )
                             }
                         } else {
-                            if (lostItems.isEmpty()) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .offset(y = offsetY),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        "Gönderiler bulunamadı",
-                                        style = MaterialTheme.typography.titleLarge
-                                    )
-                                }
-                            } else {
-                                LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .offset(y = offsetY)
-                                ) {
-                                    items(lostItems) { item ->
-                                        LostItemRow(item, viewModel, navController,user)
-                                    }
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(lostItems) { item ->
+                                    LostItemRow(item, viewModel, navController)
                                 }
                             }
                         }
@@ -245,207 +187,285 @@ fun LostItemsScreen(
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: NavHostController,user: User?) {
+fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: NavHostController) {
     var upvoteCount by remember { mutableIntStateOf(item.numOfUpVotes) }
     var downvoteCount by remember { mutableIntStateOf(item.numOfDownVotes) }
+    var selectedImageUrl by remember { mutableStateOf<String?>(null) }
+    
+    // Sender bilgilerini al
+    val senderInfo by viewModel.getSenderInfo(item.senderInfo.senderId).collectAsState()
+
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                user?.uid?.takeIf { it != item.foundByUser?.uid }?.let {
-                    navController.navigate("item_detail/${item.id}")
-                }
-
-            }
-            .padding(10.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .border(
-                border = BorderStroke(0.1.dp, Color.Gray),
-                shape = MaterialTheme.shapes.small
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .background(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable(
+                onClick = {
+                    navController.navigate("item_detail/${item.itemId}")
+                }
             )
             .padding(16.dp)
     ) {
-        // Item Name
-        Text(
-            text = item.title,
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-
-        // Location and Date Row
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.from_icon),
-                        contentDescription = "Placed Location icon",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color(0xFF58B437)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = item.foundWhere.toString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF99704D)
-                    )
-                }
-
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More icon",
-                    modifier = Modifier.size(16.dp)
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.placed_icon),
-                        contentDescription = "Placed Location icon",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color(0xFFD72224)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = item.placedWhere.toString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF99704D)
-                    )
-                }
-            }
-
             Text(
-                text = item.date,
+                text = item.itemName,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.weight(1f)
+            )
+            
+            Text(
+                text = formatTimestamp(item.timestamp),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF99704D)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Description
         Text(
-            text = item.description,
+            text = item.message,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(bottom = 8.dp)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+            modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        // Images Horizontal Pager
+        Column(
+            modifier = Modifier.padding(bottom = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(id = R.drawable.from_icon),
+                    contentDescription = "Found Location icon",
+                    modifier = Modifier.size(16.dp),
+                    tint = Color(0xFF58B437)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = item.foundWhere,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF99704D)
+                )
+            }
+
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "More icon",
+                modifier = Modifier.size(16.dp)
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(id = R.drawable.placed_icon),
+                    contentDescription = "Placed Location icon",
+                    modifier = Modifier.size(16.dp),
+                    tint = Color(0xFFD72224)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = item.placedWhere,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF99704D)
+                )
+            }
+        }
+
         if (item.images.isNotEmpty()) {
-            val pagerState = rememberPagerState()
-            Column {
-                HorizontalPager(
-                    count = item.images.size,
-                    state = pagerState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(350.dp)
-                ) { page ->
-                    val painter = rememberAsyncImagePainter(model = item.images[page])
-                    val painterState = painter.state
-
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Image(
-                            painter = painter,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit
-                        )
-
-                        // Placeholder or Loading indicator
-                        if (painterState is AsyncImagePainter.State.Loading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .size(32.dp)
-                            )
-                        }
-
-                        // Error indicator
-                        if (painterState is AsyncImagePainter.State.Error) {
-                            Text(
-                                text = "Failed to load image.",
-                                color = Color.Red,
-                                modifier = Modifier.align(Alignment.Center)
-                            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    val imageCount = item.images.size
+                    val displayCount = minOf(imageCount, 4)
+                    val rows = (displayCount + 1) / 2
+                    
+                    for (row in 0 until rows) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(if (displayCount == 1) 350.dp else 175.dp),
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            val startIndex = row * 2
+                            val endIndex = minOf(startIndex + 2, displayCount)
+                            
+                            for (i in startIndex until endIndex) {
+                                val weight = if (displayCount == 1) 1f else 0.5f
+                                Box(
+                                    modifier = Modifier
+                                        .weight(weight)
+                                        .fillMaxHeight()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { selectedImageUrl = item.images[i] }
+                                ) {
+                                    val painter = rememberAsyncImagePainter(model = item.images[i])
+                                    Image(
+                                        painter = painter,
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    
+                                    if (i == 3 && imageCount > 4) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.Black.copy(alpha = 0.6f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "+${imageCount - 4}",
+                                                color = Color.White,
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
-                Row(
-                    horizontalArrangement = Arrangement.Center,
+                Box(
                     modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .fillMaxWidth()
-                ) {
-                    repeat(item.images.size) { index ->
-                        val color =
-                            if (index == pagerState.currentPage) Color.Black else Color.LightGray
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .padding(2.dp)
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                        .background(
+                            Color.Black.copy(alpha = 0.6f),
+                            RoundedCornerShape(4.dp)
                         )
-                        if (index < item.images.size - 1) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                        }
-                    }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = when (senderInfo) {
+                            is Result.Success -> "Found by ${(senderInfo as Result.Success<User?>).data?.name ?: "Anonymous"}"
+                            is Result.Failure -> "Found by Anonymous"
+                            else -> "Found by Anonymous"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White
+                    )
                 }
             }
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(
-                onClick = {
-                    viewModel.upvoteItem(item.id.toString(), upvoteCount)
-                    upvoteCount++
-                },
-                modifier = Modifier.wrapContentWidth()
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = "Upvote button"
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = {
+                            viewModel.upvoteItem(item.itemId, upvoteCount)
+                            upvoteCount++
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.thumb_up_like_svgrepo_com),
+                            contentDescription = "Upvote",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Text(
+                        text = upvoteCount.toString(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = {
+                            viewModel.downVoteItem(item.itemId, downvoteCount)
+                            downvoteCount--
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.thumb_down_svgrepo_com),
+                            contentDescription = "Downvote",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    Text(
+                        text = downvoteCount.toString(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(text = upvoteCount.toString(), modifier = Modifier.wrapContentWidth())
 
             IconButton(
                 onClick = {
-                    viewModel.downVoteItem(item.id.toString(), downvoteCount)
-                    downvoteCount--
-                },
-                modifier = Modifier.wrapContentWidth()
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, item.toShareText())
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Share Lost Item"))
+                }
             ) {
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Downvote button"
+                    painter = painterResource(id = R.drawable.share_02_svgrepo_com),
+                    contentDescription = "Share",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(text = downvoteCount.toString(), modifier = Modifier.wrapContentWidth())
-            IconButton(
-                onClick = {
-                    // Share the item
-                },
-                modifier = Modifier.wrapContentWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Share,
-                    contentDescription = "Share button"
-                )
-            }
+        }
+
+        selectedImageUrl?.let { imageUrl ->
+            ImagePreviewDialog(
+                imageUrl = imageUrl,
+                onDismiss = { selectedImageUrl = null },
+                item = item
+            )
         }
     }
 }
 
+
+
+fun formatTimestamp(timestamp: Timestamp): String {
+    val date = timestamp.toDate()
+
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) // Gün/Ay/Yıl
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())     // Saat:Dakika
+
+    val formattedDate = dateFormat.format(date)
+    val formattedTime = timeFormat.format(date)
+
+    return "$formattedDate $formattedTime"
+}
 
 @Composable
 fun ShimmerEffect(
@@ -537,5 +557,114 @@ fun ShimmerEffect(
                 .height(30.dp)
                 .background(brush)
         )
+    }
+}
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun ImagePreviewDialog(
+    imageUrl: String,
+    onDismiss: () -> Unit,
+    item: LostItem
+) {
+    val pagerState = rememberPagerState(
+        initialPage = item.images.indexOf(imageUrl)
+    )
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.9f))
+        ) {
+            HorizontalPager(
+                count = item.images.size,
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(onClick = onDismiss)
+                ) {
+                    val painter = rememberAsyncImagePainter(
+                        model = item.images[page]
+                    )
+                    
+                    Image(
+                        painter = painter,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center),
+                        contentScale = ContentScale.Fit
+                    )
+
+                    if (painter.state is AsyncImagePainter.State.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .size(48.dp),
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            // Sayfa göstergesi
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${pagerState.currentPage + 1}/${item.images.size}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            // Kapatma butonu
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close preview",
+                    tint = Color.White
+                )
+            }
+        }
+    }
+}
+
+fun LostItem.toShareText(): String {
+    return buildString {
+        appendLine("🔍 Lost Item Details")
+        appendLine("📦 Item: $itemName")
+        appendLine("📝 Description: $message")
+        appendLine()
+        appendLine("📍 Found at: $foundWhere")
+        appendLine("📍 Placed at: $placedWhere")
+        appendLine()
+        appendLine("⏰ Date: ${formatTimestamp(timestamp)}")
+        appendLine()
+        appendLine("If you have any information about this item, please contact through the app.")
+        appendLine("Download Find Lost Item app to help others find their lost items!")
     }
 }

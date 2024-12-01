@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ribuufing.findlostitem.data.model.LostItem
 import com.ribuufing.findlostitem.data.model.User
 import com.ribuufing.findlostitem.domain.use_cases.GetCurrentUserUidUseCase
-import com.ribuufing.findlostitem.domain.use_cases.GetLostItemByIdUseCase
+import com.ribuufing.findlostitem.domain.use_cases.GetLostItemsByUserId
 import com.ribuufing.findlostitem.domain.use_cases.GetUserInfosByUidUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ import com.ribuufing.findlostitem.utils.Result
 class ProfileViewModel @Inject constructor(
     private val getUserInfosByUidUseCase: GetUserInfosByUidUseCase,
     private val getCurrentUserUidUseCase: GetCurrentUserUidUseCase,
-    private val getLostItemByIdUseCase: GetLostItemByIdUseCase
+    private val getLostItemsByUserId: GetLostItemsByUserId
 ) : ViewModel() {
 
     private val _userInfos = MutableStateFlow<Result<User?>>(Result.Loading)
@@ -51,7 +51,7 @@ class ProfileViewModel @Inject constructor(
                 getUserInfosByUidUseCase(uid).collect { result ->
                     _userInfos.value = result
                     if (result is Result.Success && result.data != null) {
-                        loadLostItems(result.data.foundedItems)
+                        loadLostItems(uid)
                     }
                 }
             } catch (e: Exception) {
@@ -62,15 +62,11 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    private fun loadLostItems(itemIds: List<String>) {
+    private fun loadLostItems(userId: String) {
         viewModelScope.launch {
-            val items = mutableListOf<LostItem>()
-            for (id in itemIds) {
-                getLostItemByIdUseCase(id).collect { item ->
-                    item.let { items.add(it) }
-                }
+            getLostItemsByUserId(userId).collect { items ->
+                _lostItems.value = items
             }
-            _lostItems.value = items
         }
     }
 }

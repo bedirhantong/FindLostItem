@@ -22,6 +22,7 @@ import com.ribuufing.findlostitem.presentation.mapscreen.MapScreen
 import com.ribuufing.findlostitem.presentation.profile.presentation.ProfileScreen
 import com.ribuufing.findlostitem.presentation.profile.presentation.settings.SettingsScreen
 import com.ribuufing.findlostitem.presentation.reportfounditem.ReportFoundItemScreen
+import com.ribuufing.findlostitem.presentation.search.SearchScreen
 
 @Composable
 fun NavigationGraph(
@@ -112,6 +113,10 @@ fun NavigationGraph(
             val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
             onBottomBarVisibility(false)
             LostItemDetailScreen(navController, itemId)
+        }
+
+        composable("search") {
+            SearchScreen(navController = navController)
         }
     }
 }

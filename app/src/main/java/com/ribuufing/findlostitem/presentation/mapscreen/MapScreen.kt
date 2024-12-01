@@ -1,297 +1,136 @@
 package com.ribuufing.findlostitem.presentation.mapscreen
 
-import android.annotation.SuppressLint
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.Circle
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.rememberCameraPositionState
-import com.ribuufing.findlostitem.data.model.Location
-import com.ribuufing.findlostitem.data.model.LostItem
-import androidx.compose.material3.*
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.maps.model.CameraPosition
-import kotlin.random.Random
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import android.Manifest
-import androidx.activity.compose.BackHandler
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import com.ribuufing.findlostitem.navigation.BottomNavigationItems
-import kotlinx.coroutines.launch
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.maps.android.compose.*
+import com.ribuufing.findlostitem.R
+import com.ribuufing.findlostitem.data.model.Location
+import com.ribuufing.findlostitem.presentation.mapscreen.components.MapBottomSheet
+import com.ribuufing.findlostitem.presentation.mapscreen.components.MapTopAppBar
+import com.ribuufing.findlostitem.presentation.mapscreen.markers.AnimatedClusterMarker
+import com.ribuufing.findlostitem.presentation.mapscreen.markers.AnimatedSingleMarker
 
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
     viewModel: MapViewModel = hiltViewModel(),
     navController: NavHostController
 ) {
-    val context = LocalContext.current
-    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val clusters by viewModel.clusters.collectAsState()
     val selectedClusterItems by viewModel.selectedClusterItems.collectAsState()
+    val selectedItem by viewModel.selectedItem.collectAsState()
     val isBottomSheetExpanded by viewModel.isBottomSheetExpanded.collectAsState()
+    
+    val cameraPositionState = rememberCameraPositionState()
+    val scrollState = remember { mutableStateOf(0f) }
 
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    val coroutineScope = rememberCoroutineScope()
-
-    var userLocation by remember { mutableStateOf<LatLng?>(null) }
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(36.896405, 30.658459), 15f)
+    LaunchedEffect(cameraPositionState.position) {
+        scrollState.value = (cameraPositionState.position.bearing / 360f).coerceIn(0f, 1f)
     }
-
-    val permissionState = rememberMultiplePermissionsState(
-        permissions = listOf(
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION,
+    
+    Box(modifier = Modifier.fillMaxSize()) {
+        MapContent(
+            clusters = clusters,
+            onMarkerClick = viewModel::onMapClick,
+            viewModel = viewModel,
+            cameraPositionState = cameraPositionState
         )
+
+        MapTopAppBar(
+            navController = navController,
+            scrollState = scrollState.value
+        )
+
+        if (isBottomSheetExpanded) {
+            MapBottomSheet(
+                isExpanded = isBottomSheetExpanded,
+                selectedItem = selectedItem,
+                selectedItems = selectedClusterItems,
+                onItemClick = viewModel::selectItem,
+                onDismiss = viewModel::collapseBottomSheet,
+                onNavigateToDetail = { itemId -> 
+                    navController.navigate("item_detail/$itemId")
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun MapContent(
+    clusters: List<Cluster>,
+    onMarkerClick: (Location) -> Unit,
+    viewModel: MapViewModel,
+    cameraPositionState: CameraPositionState
+) {
+    val akdenizUniversityBounds = listOf(
+        LatLng(36.88647221734685, 30.662544051047327),
+        LatLng(36.9008353387027, 30.66451987103039),
+        LatLng(36.89975145334323, 30.63405932261706),
+        LatLng(36.88761602348164, 30.638656677775707),
+        LatLng(36.88832691917245, 30.655198176170995),
+        LatLng(36.88647221734685, 30.662544051047327)
     )
 
-    BackHandler {
-        navController.navigate(BottomNavigationItems.Home.route) {
-            popUpTo(navController.graph.findStartDestination().id)
-        }
+    val campusCenter = LatLng(
+        akdenizUniversityBounds.dropLast(1).map { it.latitude }.average(),
+        akdenizUniversityBounds.dropLast(1).map { it.longitude }.average()
+    )
+
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(campusCenter, 14.5f)
     }
 
-    LaunchedEffect(permissionState) {
-        if (permissionState.allPermissionsGranted) {
-            getCurrentLocation(
-                fusedLocationClient,
-                onGetCurrentLocationSuccess = { location ->
-                    userLocation = LatLng(location.first, location.second)
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(userLocation!!, 15f)
-                },
-                onGetCurrentLocationFailed = {
-                    // Handle location retrieval failure
-                }
+    LaunchedEffect(cameraPositionState.position) {
+        viewModel.updateZoomLevel(cameraPositionState.position.zoom)
+    }
+
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState,
+        properties = MapProperties(
+            isMyLocationEnabled = true,
+            mapStyleOptions = MapStyleOptions.loadRawResourceStyle(
+                LocalContext.current,
+                R.raw.map_style
             )
-        } else {
-            permissionState.launchMultiplePermissionRequest()
-        }
-    }
-
-    if (permissionState.allPermissionsGranted) {
-        Scaffold { paddingValues ->
-            Box(modifier = Modifier.padding(paddingValues)) {
-                GoogleMap(
-                    modifier = Modifier.fillMaxSize(),
-                    properties = MapProperties(isMyLocationEnabled = true),
-                    cameraPositionState = cameraPositionState,
-                    uiSettings = MapUiSettings(
-                        zoomControlsEnabled = true,
-                        mapToolbarEnabled = false,
-                        myLocationButtonEnabled = true
-                    ),
-                    onMapClick = { latLng ->
-                        viewModel.onMapClick(Location(latLng.latitude, latLng.longitude))
-                    }
-                ) {
-                    clusters.forEach { cluster ->
-                        Circle(
-                            center = LatLng(cluster.center.latitude, cluster.center.longitude),
-                            radius = 500.0 * cluster.items.size,
-                            fillColor = getDensityColor(cluster.items.size).copy(alpha = 0.5f),
-                            strokeColor = Color.Transparent,
-                            clickable = true,
-                            onClick = {
-                                viewModel.onMapClick(cluster.center)
-                                coroutineScope.launch {
-                                    bottomSheetState.show()
-                                }
-                            }
-                        )
-                    }
-                }
-
-                if (isBottomSheetExpanded) {
-                    ModalBottomSheet(
-                        onDismissRequest = { viewModel.collapseBottomSheet() },
-                        sheetState = bottomSheetState,
-                        dragHandle = { BottomSheetDefaults.DragHandle() }
-                    ) {
-                        BottomSheetContent(
-                            items = selectedClusterItems,
-                            onItemClick = { item ->
-                                navController.navigate("item_detail/${item.id}")
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    } else {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Location permission is required to use this feature")
-            Button(onClick = { permissionState.launchMultiplePermissionRequest() }) {
-                Text("Request Permission")
-            }
-        }
-    }
-}
-
-@SuppressLint("MissingPermission")
-private fun getCurrentLocation(
-    fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient,
-    onGetCurrentLocationSuccess: (Pair<Double, Double>) -> Unit,
-    onGetCurrentLocationFailed: (Exception) -> Unit,
-    priority: Boolean = true
-) {
-    val accuracy = if (priority) Priority.PRIORITY_HIGH_ACCURACY else Priority.PRIORITY_BALANCED_POWER_ACCURACY
-
-    fusedLocationClient.getCurrentLocation(accuracy, null)
-        .addOnSuccessListener { location ->
-            location?.let {
-                onGetCurrentLocationSuccess(Pair(it.latitude, it.longitude))
-            }
-        }
-        .addOnFailureListener { exception ->
-            onGetCurrentLocationFailed(exception)
-        }
-}
-
-
-@Composable
-fun BottomSheetContent(
-    items: List<LostItem>,
-    onItemClick: (LostItem) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
+        ),
+        uiSettings = MapUiSettings(
+            zoomControlsEnabled = true,
+            myLocationButtonEnabled = false,
+            mapToolbarEnabled = false
+        )
     ) {
-        Text(
-            text = "Items found",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 16.dp)
+        Polygon(
+            points = akdenizUniversityBounds,
+            fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+            strokeColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+            strokeWidth = 2f
         )
 
-        LazyColumn {
-            items(items) { item ->
-                LostItemCard(
-                    item = item,
-                    onItemClick = { onItemClick(item) }
+        clusters.forEach { cluster ->
+            if (cluster.items.size == 1) {
+                AnimatedSingleMarker(
+                    item = cluster.items.first(),
+                    onClick = { onMarkerClick(cluster.center) }
+                )
+            } else {
+                AnimatedClusterMarker(
+                    cluster = cluster,
+                    onClick = { onMarkerClick(cluster.center) }
                 )
             }
         }
-    }
-}
-
-@Composable
-fun LostItemCard(
-    item: LostItem,
-    onItemClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable(onClick = onItemClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AsyncImage(
-                model = item.images.firstOrNull(),
-                contentDescription = item.title,
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(MaterialTheme.shapes.small),
-                contentScale = ContentScale.Crop
-            )
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 12.dp)
-            ) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = item.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                Text(
-                    text = "${calculateDistance(item.foundWhere)} km",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "View Details",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-private fun calculateDistance(location: Location): String {
-    // Implement distance calculation logic here
-    return String.format("%.1f", Random.nextDouble(0.1, 5.0))
-}
-
-fun getDensityColor(density: Int): Color {
-    return when {
-        density > 3 -> Color(0xFFB71C1C)
-        density > 2 ->Color(0xFFFFA000)
-        else -> Color(0xFF388E3C)
     }
 }

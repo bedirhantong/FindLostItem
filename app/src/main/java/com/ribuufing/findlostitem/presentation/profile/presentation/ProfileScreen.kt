@@ -1,24 +1,15 @@
 package com.ribuufing.findlostitem.presentation.profile.presentation
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Scaffold
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,36 +28,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImagePainter
-import coil.compose.rememberAsyncImagePainter
-import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.ribuufing.findlostitem.R
 import com.ribuufing.findlostitem.navigation.Routes
-import com.ribuufing.findlostitem.presentation.home.ShimmerEffect
 import com.ribuufing.findlostitem.presentation.nointernet.NoInternetScreen
 import com.ribuufing.findlostitem.presentation.nointernet.NoInternetViewModel
-import com.google.accompanist.pager.*
-//noinspection UsingMaterialAndMaterial3Libraries
-import androidx.compose.material.*
-import androidx.compose.ui.draw.clip
-import com.ribuufing.findlostitem.data.model.LostItem
-import com.ribuufing.findlostitem.data.model.User
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.ribuufing.findlostitem.presentation.profile.components.ProfileContent
 import com.ribuufing.findlostitem.utils.Result
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     noInternetViewModel: NoInternetViewModel = hiltViewModel(),
@@ -81,16 +55,16 @@ fun ProfileScreen(
     val userInfoState = viewModel.userInfos.collectAsState().value
     val lostItems by viewModel.lostItems.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.refreshUserInfos()
+        noInternetViewModel.checkInternetConnection()
+    }
+
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
             viewModel.refreshUserInfos()
             isRefreshing = false
         }
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.refreshUserInfos()
-        noInternetViewModel.checkInternetConnection()
     }
 
     openDialog.value = !isInternetAvailable
@@ -100,34 +74,7 @@ fun ProfileScreen(
     })
 
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .imePadding(),
-                title = {
-                    Text(
-                        text = "PROFILE",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                },
-                actions = {
-                    IconButton(onClick = {
-                        navController.navigate(Routes.Settings.route)
-                    }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.settings),
-                            contentDescription = "Settings Button",
-                            modifier = Modifier.size(24.dp),
-                            tint = Color(0xFFED822B)
-                        )
-                    }
-                }
-            )
-        },
+        backgroundColor = Color.Transparent,
         content = {
             SwipeRefresh(
                 state = swipeRefreshState,
@@ -137,283 +84,59 @@ fun ProfileScreen(
                         state = state,
                         refreshTriggerDistance = trigger,
                         contentColor = MaterialTheme.colorScheme.primary,
-                        backgroundColor = MaterialTheme.colorScheme.background,
-                        elevation = 8.dp,
+                        backgroundColor = MaterialTheme.colorScheme.background
                     )
                 }
             ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (isLoading) {
-                        LazyColumn {
-                            items(5) { ShimmerEffect(
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(it)
+                ) {
+                    when {
+                        isLoading -> {
+                            CircularProgressIndicator(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(100.dp)
-                                    .padding(16.dp)
-                            ) }
+                                    .size(50.dp)
+                                    .align(Alignment.Center)
+                            )
                         }
-                    } else {
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            when (userInfoState) {
-                                is Result.Success -> {
-                                    val user = userInfoState.data
-                                    if (user != null) {
-                                        ProfileContent(user, lostItems)
-                                    } else {
-                                        Text("No user data available")
-                                    }
-                                }
-                                is Result.Failure -> {
-                                    Text("Error: ${userInfoState.exception.localizedMessage}")
-                                }
-                                else -> {
-                                    Text("Unknown state")
-                                }
+                        userInfoState is Result.Success -> {
+                            val user = userInfoState.data
+                            if (user != null) {
+                                ProfileContent(
+                                    user = user,
+                                    foundItems = lostItems,
+                                    onSettingsClick = {
+                                        navController.navigate(Routes.Settings.route)
+                                    },
+                                    onRefresh = { isRefreshing = true },
+                                    isRefreshing = isRefreshing
+                                )
+                            } else {
+                                Text(
+                                    "No user data available",
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
                             }
+                        }
+                        userInfoState is Result.Failure -> {
+                            Text(
+                                text = "Error: ${userInfoState.exception.localizedMessage}",
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .padding(16.dp)
+                            )
+                        }
+                        else -> {
+                            Text(
+                                text = "Loading user data...",
+                                modifier = Modifier.align(Alignment.Center)
+                            )
                         }
                     }
                 }
             }
         }
     )
-}
-
-@Composable
-fun ProfileContent(user: User, foundItems: List<LostItem>) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(150.dp)
-        ) {
-            Image(
-                painter = rememberAsyncImagePainter(model =  "https://webis.akdeniz.edu.tr/uploads/1167/slider/5a106276-13d5-42e4-ace4-b335f5c3b946.png"),
-                contentDescription = "Background Image",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .offset(y = (-40).dp)
-        ) {
-            // Profil Fotoğrafı
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .border(2.dp, Color.White, CircleShape)
-                    .background(Color.Gray)
-                    .align(Alignment.Start)
-            ) {
-                val painter = rememberAsyncImagePainter(model = user.imageUrl.ifEmpty { "https://cdn.pixabay.com/photo/2014/03/25/16/24/female-296989_1280.png" })
-                val painterState = painter.state
-                Image(
-                    painter = painter,
-                    contentDescription = "Profile Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-                if (painterState is AsyncImagePainter.State.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .size(32.dp)
-                    )
-                }
-
-                if (painterState is AsyncImagePainter.State.Error) {
-                    Text(
-                        text = "X",
-                        color = Color.Red,
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = user.name,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Text(
-                text = "@${user.name}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "@cse.akdeniz.edu.tr",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TabPagerExample(it = PaddingValues(0.dp), foundItems = foundItems)
-        }
-    }
-}
-
-
-@OptIn(ExperimentalPagerApi::class)
-@Composable
-fun TabPagerExample(it: PaddingValues, foundItems: List<LostItem>) {
-    val tabs = listOf(
-        "Found items"
-//        , "Tab 2", "Tab 3"
-    )
-    val pagerState = rememberPagerState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(it)
-    ) {
-        TabRow(
-            indicator = { tabPositions ->
-                TabRowDefaults.Indicator(
-                    modifier = Modifier
-                        .pagerTabIndicatorOffset(pagerState, tabPositions)
-                        .height(0.2.dp),
-                    color = Color.Black
-                )
-            },
-            selectedTabIndex = pagerState.currentPage,
-            backgroundColor = Color.Transparent,
-            contentColor = Color.White,
-            tabs = {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = {
-                            CoroutineScope(Dispatchers.IO).launch {
-                                pagerState.scrollToPage(index)
-                            }
-                        },
-                        text = {
-                            Text(title, fontWeight = FontWeight.Bold)
-                        }
-                    )
-                }
-            }
-        )
-
-        HorizontalPager(
-            count = tabs.size,
-            state = pagerState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
-        ) { page ->
-            when (page) {
-                0 -> ListContent(foundItems)
-//                1 -> ListContent(foundItems)
-//                2 -> ListContent(foundItems)
-            }
-        }
-    }
-}
-
-@Composable
-fun ListContent(foundItems:  List<LostItem>) {
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 56.dp)
-    ) {
-        items(foundItems.size) { index ->
-            LostItemRow(
-                item = foundItems[index]
-            )
-        }
-    }
-}
-
-@Composable
-fun LostItemRow(item: LostItem) {
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val painter = rememberAsyncImagePainter(model = item.images[0])
-            val painterState = painter.state
-
-            Box(
-                modifier = Modifier
-                    .size(90.dp)
-                    .padding(end = 16.dp)
-            ) {
-                Image(
-                    painter = painter,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .clip(MaterialTheme.shapes.medium)
-                        .fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                if (painterState is AsyncImagePainter.State.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .size(24.dp)
-                    )
-                }
-
-                if (painterState is AsyncImagePainter.State.Error) {
-                    Text(
-                        text = "Failed to load",
-                        color = Color.Red,
-                        modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-
-            Column(
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                    color = Color.Black,
-                )
-
-                Text(
-                    text = "Lost on ${item.date}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
-            }
-        }
-
-        IconButton(
-            onClick = {
-            }
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.trash),
-                contentDescription = "Delete item",
-                modifier = Modifier.size(24.dp),
-                tint = Color(0xFF000000)
-            )
-        }
-    }
 }
