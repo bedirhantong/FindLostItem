@@ -1,36 +1,121 @@
-![](arts/find_lost_items.png)
-
-# **Lost & Found Items University App**
-
-#### **Find Lost Items** aims to help students and staff at the university easily report, find, and communicate about lost and found items.
-
-## Features
-
-- **View Detailed Lost Item Listings**: Users can browse a comprehensive list of lost item reports, complete with detailed descriptions and images of the items.
-
-- **Messaging**: Users can directly message each other regarding specific listings to ask questions or arrange for item retrieval.
-
-- **Upload Listings**: Users can easily upload their own lost item reports, providing necessary details to help others assist in their search.
-
-- **Rate Listings**: Users can evaluate listings based on their usefulness and accuracy, helping to improve the quality of information shared within the app.
-
-- **Map Exploration**: Users can explore an interactive map to see the locations where items have been found, enabling them to check for items that may have been lost in similar areas.
+<div align="center">
+  <img src="arts/find_lost_items.png" alt="App Logo" width="1200"/>
+  <h1>Lost & Found Items University App</h1>
+  <p>
+    <strong>Find Lost Items aims to help students and staff at the university easily report, find, and communicate about lost and found items.
+</strong>
+  </p>
+</div>
 
 
-## Technology Stack
+## ✨ Features
 
-- **Jetpack Compose**: A modern toolkit for building native UI in Android, which allows for a more declarative approach to designing user interfaces, resulting in cleaner and more maintainable code.
+<details>
+<summary><b>🎯 Core Features</b></summary>
 
-- **Clean Architecture**: This design pattern helps in separating concerns and making the codebase more scalable and testable, allowing for easier maintenance and future enhancements.
+* **Lost Item Management**
+  - Report found items with multiple images
+  - Detailed item descriptions
+  - Precise location marking
+  - Real-time status updates
 
-- **Coil**: An image loading library for Android that efficiently loads and displays images
+* **Location Features**
+  - Interactive campus map
+  - Location clustering
+  - Custom map styling
+  - Location selection for found items
+</details>
 
-- **Paging 3**: A library that simplifies loading large datasets by providing a paginated approach.
+<details>
+<summary><b>💬 Communication</b></summary>
 
-- **Retrofit**: for communication with RESTful APIs and handle network requests and responses.
+* **Messaging System**
+  - Direct messaging between users
+  - Real-time chat updates
+  - Message history
+  - User status indicators
 
-- **Firestore Database**: A flexible, scalable NoSQL cloud database.
+* **Notifications**
+  - New message alerts
+  - Item status updates
+  - Location-based notifications
+</details>
 
-- **Firebase Analytics**: A powerful analytics tool that helps track user behavior.
 
-- **Dagger Hilt**: A dependency injection library
+## Screenshots
+
+
+| splash | login | signup |
+|:-:|:-:|:-:|
+| <img src="arts/splash.png" alt="drawing" width="250"/> | <img src="arts/login.png" alt="drawing" width="250"/> | <img src="arts/signup.png" alt="drawing" width="250"/> |
+| home | search | post |
+| <img src="arts/home.png" alt="drawing" width="250"/> | <img src="arts/search.png" alt="drawing" width="250"/> | <img src="arts/new_post.png" alt="drawing" width="250"/> 
+| map | profile | movie detail |
+| <img src="arts/map.png" alt="drawing" width="250"/> | <img src="arts/profile.png" alt="drawing" width="250"/> | <img src="arts/item_detail.png" alt="drawing" width="250"/> 
+
+
+
+## 🛠️ Technology Stack
+
+<details>
+<summary><b>📱 Frontend</b></summary>
+
+* **UI Framework**
+  - Jetpack Compose
+  - Material 3 Design
+  - Custom Composables
+  - Navigation Component
+
+* **State Management**
+  - ViewModel
+  - Kotlin Flow
+  - StateFlow
+</details>
+
+<details>
+<summary><b>🔧 Backend & Data</b></summary>
+
+* **Firebase Services**
+  - Authentication
+  - Firestore
+  - Storage
+  - Analytics
+
+* **Local Storage**
+  - SharedPreferences
+  - Room Database (planned)
+</details>
+
+<details>
+<summary><b>📚 Libraries</b></summary>
+
+* **Dependency Injection**
+  - Dagger Hilt
+
+* **Image Loading**
+  - Coil
+
+* **Maps**
+  - Google Maps SDK
+  - Maps Compose
+
+* **Other**
+  - Kotlin Coroutines
+  - Android KTX
+</details>
+
+## 🔒 Security
+
+<details>
+<summary><b>ProGuard Rules</b></summary>
+
+* **Model Classes Protection**
+  - Keep data models
+  - Preserve Firebase classes
+  - Protect Compose components
+
+* **Library Configurations**
+  - Hilt ProGuard rules
+  - Navigation component rules
+  - Model class preservation
+</details>
