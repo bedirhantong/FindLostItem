@@ -139,9 +139,7 @@ fun LostItemsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(it)
-            ) {
-                // SwipeRefresh
-                SwipeRefresh(
+            ) { SwipeRefresh(
                     state = swipeRefreshState,
                     onRefresh = { isRefreshing = true },
                     indicator = { state, trigger ->
@@ -155,7 +153,7 @@ fun LostItemsScreen(
                     }
                 ) {
                     val offsetY =
-                        min(swipeRefreshState.indicatorOffset.dp, 80.dp) // Cap the movement
+                        min(swipeRefreshState.indicatorOffset.dp, 80.dp)
 
                     Box(modifier = Modifier.fillMaxSize()) {
                         if (isLoading) {
@@ -214,9 +212,11 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                user?.uid?.takeIf { it != item.senderInfo.senderId }?.let {
-                    navController.navigate("item_detail/${item.itemId}")
-                }
+//                user?.uid?.takeIf { it != item.senderInfo.senderId }?.let {
+//
+//                }
+
+                navController.navigate("item_detail/${item.itemId}")
 
             }
             .padding(10.dp)
@@ -226,14 +226,11 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
             )
             .padding(16.dp)
     ) {
-        // Item Name
         Text(
             text = item.itemName,
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(bottom = 8.dp),
         )
-
-        // Location and Date Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -285,14 +282,12 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Description
         Text(
             text = item.message,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        // Images Horizontal Pager
         if (item.images.isNotEmpty()) {
             val pagerState = rememberPagerState()
             Column {
@@ -394,7 +389,6 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
             Text(text = downvoteCount.toString(), modifier = Modifier.wrapContentWidth())
             IconButton(
                 onClick = {
-                    // Share the item
                 },
                 modifier = Modifier.wrapContentWidth()
             ) {

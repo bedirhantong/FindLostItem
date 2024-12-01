@@ -169,47 +169,55 @@ fun LostItemDetailScreen(
 
 
                         Spacer(modifier = Modifier.height(10.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            FilledTonalButton(
-                                onClick = {
-                                    val receiverUid = item.senderInfo.senderId ?: return@FilledTonalButton
-                                    currentUserUid?.let { senderUid ->
-                                        navController.navigate("${Routes.Chat.route}/${item.itemId}/$senderUid/$receiverUid")
-                                    }
-                                },
-                                modifier = Modifier.weight(1f)
+                        lostItem?.senderInfo?.senderId?.takeIf { it != currentUserUid }?.let {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Create,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Message")
+                                FilledTonalButton(
+                                    onClick = {
+                                        val receiverUid = item.senderInfo.senderId ?: return@FilledTonalButton
+                                        currentUserUid?.let { senderUid ->
+                                            navController.navigate("${Routes.Chat.route}/${item.itemId}/$senderUid/$receiverUid")
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Create,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Message")
+                                }
+
+                                FilledTonalButton(
+                                    onClick = { /* Dial number */ },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Call,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Call")
+                                }
                             }
 
-                            FilledTonalButton(
-                                onClick = { /* Dial number */ },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Call,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Call")
-                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+                        } ?: run {
+                            Text(
+                                text = "You are the owner of this item",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             } ?: run {

@@ -58,8 +58,6 @@ fun GridItemCard(
                     color = Color(0xFFED822B)
                 )
             }
-
-            // Overlay gradient for text visibility
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -75,7 +73,6 @@ fun GridItemCard(
                     )
             )
 
-            // Item name at bottom
             Text(
                 text = item.itemName,
                 style = MaterialTheme.typography.bodyMedium,
