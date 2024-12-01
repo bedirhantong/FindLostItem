@@ -58,8 +58,9 @@ fun LoginScreen(
         storageRef.listAll()
             .addOnSuccessListener { listResult ->
                 if (listResult.items.isNotEmpty()) {
-                    listResult.items[0].downloadUrl.addOnSuccessListener { uri ->
-                        imageUrl.value = uri.toString()
+                    val loginImageRef = listResult.items.firstOrNull { it.name == "login.jpg" }
+                    loginImageRef?.downloadUrl?.addOnSuccessListener {
+                        imageUrl.value = it.toString()
                         isLoading = false
                     }
                 } else {
@@ -100,7 +101,6 @@ fun LoginScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Arka Plan Resmi
             Box(modifier = Modifier.height(350.dp)) {
                 if (isLoading) {
                     CircularProgressIndicator(
