@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -36,6 +37,7 @@ import com.ribuufing.findlostitem.navigation.BottomNavigationItems
 import com.ribuufing.findlostitem.navigation.Routes
 import com.ribuufing.findlostitem.presentation.auth.presentation.AuthViewModel
 import com.ribuufing.findlostitem.utils.Result
+import com.ribuufing.findlostitem.R
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
@@ -170,8 +172,15 @@ fun LoginScreen(
                 trailingIcon = {
                     IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                         Icon(
-                            imageVector = if (isPasswordVisible) Icons.Filled.Done else Icons.Filled.Close,
-                            contentDescription = null
+                            painter = painterResource(
+                                id = if (isPasswordVisible) {
+                                    R.drawable.ic_visibility
+                                } else {
+                                    R.drawable.ic_visibility_off
+                                }
+                            ),
+                            contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
+                            tint = Color(0xFF99704D)
                         )
                     }
                 }
