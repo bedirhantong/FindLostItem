@@ -116,6 +116,7 @@ fun NavigationGraph(
         }
 
         composable("search") {
+            onBottomBarVisibility(true)
             SearchScreen(navController = navController)
         }
     }
