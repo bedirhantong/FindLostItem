@@ -126,7 +126,7 @@ fun ProfileContent(
                     )
 
                     Text(
-                        text = "@cse.akdeniz.edu.tr",
+                        text = user.email,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
