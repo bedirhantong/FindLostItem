@@ -43,9 +43,7 @@ fun SettingsScreen(
                 is Result.Success -> {
                     Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
                     navController.navigate(Routes.Login.route) {
-                        popUpTo(BottomNavigationItems.Profile.route) {
-                            inclusive = true
-                        }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
                 is Result.Failure -> {

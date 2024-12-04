@@ -190,6 +190,8 @@ fun LostItemsScreen(
 fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: NavHostController) {
     var upvoteCount by remember { mutableIntStateOf(item.numOfUpVotes) }
     var downvoteCount by remember { mutableIntStateOf(item.numOfDownVotes) }
+    var hasUpvoted by remember { mutableStateOf(false) }
+    var hasDownvoted by remember { mutableStateOf(false) }
     var selectedImageUrl by remember { mutableStateOf<String?>(null) }
     
     // Sender bilgilerini al
@@ -384,15 +386,34 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
                 ) {
                     IconButton(
                         onClick = {
-                            viewModel.upvoteItem(item.itemId, upvoteCount)
-                            upvoteCount++
+                            if (hasDownvoted) {
+                                // Remove downvote first
+                                viewModel.removeDownvote(item.itemId, downvoteCount)
+                                downvoteCount++
+                                hasDownvoted = false
+                            }
+                            
+                            if (hasUpvoted) {
+                                // Remove upvote
+                                viewModel.removeUpvote(item.itemId, upvoteCount)
+                                upvoteCount--
+                                hasUpvoted = false
+                            } else {
+                                // Add upvote
+                                viewModel.upvoteItem(item.itemId, upvoteCount)
+                                upvoteCount++
+                                hasUpvoted = true
+                            }
                         }
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.thumb_up_like_svgrepo_com),
+                            painter = painterResource(id = R.drawable.ic_thumb_up),
                             contentDescription = "Upvote",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            modifier = Modifier.size(24.dp),
+                            tint = if (hasUpvoted) 
+                                Color(0xFF4CAF50) // Material Green
+                            else 
+                                Color.Gray.copy(alpha = 0.6f)
                         )
                     }
                     Text(
@@ -407,15 +428,34 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
                 ) {
                     IconButton(
                         onClick = {
-                            viewModel.downVoteItem(item.itemId, downvoteCount)
-                            downvoteCount--
+                            if (hasUpvoted) {
+                                // Remove upvote first
+                                viewModel.removeUpvote(item.itemId, upvoteCount)
+                                upvoteCount--
+                                hasUpvoted = false
+                            }
+                            
+                            if (hasDownvoted) {
+                                // Remove downvote
+                                viewModel.removeDownvote(item.itemId, downvoteCount)
+                                downvoteCount++
+                                hasDownvoted = false
+                            } else {
+                                // Add downvote
+                                viewModel.downVoteItem(item.itemId, downvoteCount)
+                                downvoteCount--
+                                hasDownvoted = true
+                            }
                         }
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.thumb_down_svgrepo_com),
+                            painter = painterResource(id = R.drawable.ic_thumb_down),
                             contentDescription = "Downvote",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.error
+                            modifier = Modifier.size(24.dp),
+                            tint = if (hasDownvoted) 
+                                Color(0xFFF44336) // Material Red
+                            else 
+                                Color.Gray.copy(alpha = 0.6f)
                         )
                     }
                     Text(

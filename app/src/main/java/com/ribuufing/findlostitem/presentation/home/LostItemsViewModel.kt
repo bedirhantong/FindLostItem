@@ -76,6 +76,16 @@ class LostItemsViewModel @Inject constructor(
         }
     }
 
+    fun removeUpvote(itemId: String, currentUpvotes: Int) {
+        // Remove upvote from Firebase
+        // Similar to upvoteItem but decrements the count
+    }
+
+    fun removeDownvote(itemId: String, currentDownvotes: Int) {
+        // Remove downvote from Firebase
+        // Similar to downVoteItem but increments the count
+    }
+
     private fun calculateVoteRatio(item: LostItem): Double {
         val voteDiff = item.numOfUpVotes - kotlin.math.abs(item.numOfDownVotes)
         return if (voteDiff > 0) voteDiff.toDouble() else 0.0
