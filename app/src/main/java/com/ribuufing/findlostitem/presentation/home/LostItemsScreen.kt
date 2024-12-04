@@ -407,13 +407,13 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
                         }
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.thumb_up_like_svgrepo_com),
+                            painter = painterResource(id = R.drawable.ic_thumb_up),
                             contentDescription = "Upvote",
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(24.dp),
                             tint = if (hasUpvoted) 
-                                MaterialTheme.colorScheme.primary 
+                                Color(0xFF4CAF50) // Material Green
                             else 
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                Color.Gray.copy(alpha = 0.6f)
                         )
                     }
                     Text(
@@ -449,13 +449,13 @@ fun LostItemRow(item: LostItem, viewModel: LostItemsViewModel, navController: Na
                         }
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.thumb_down_svgrepo_com),
+                            painter = painterResource(id = R.drawable.ic_thumb_down),
                             contentDescription = "Downvote",
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(24.dp),
                             tint = if (hasDownvoted) 
-                                MaterialTheme.colorScheme.error 
+                                Color(0xFFF44336) // Material Red
                             else 
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                Color.Gray.copy(alpha = 0.6f)
                         )
                     }
                     Text(
