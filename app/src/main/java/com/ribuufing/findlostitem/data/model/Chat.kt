@@ -1,18 +1,20 @@
 package com.ribuufing.findlostitem.data.model
 
-import kotlinx.serialization.Serializable
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentId
 
-@Serializable
 data class Chat(
-    val id: Int = 0,
-    val messages: List<Message>
+    @DocumentId val id: String = "",
+    val itemId: String = "",
+    val participants: List<String> = listOf(),
+    val lastMessage: String = "",
+    val lastMessageTimestamp: Timestamp = Timestamp.now()
 )
 
-@Serializable
 data class Message(
-    val id: Int = 0,
-    val senderUser: User,
-    val receiverUser: User,
-    val content : String = "",
-    val date : String
+    @DocumentId val id: String = "",
+    val chatId: String = "",
+    val senderId: String = "",
+    val content: String = "",
+    val timestamp: Timestamp = Timestamp.now()
 )

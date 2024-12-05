@@ -28,6 +28,18 @@ android {
 
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            // R8 full mode
+            tasks.withType<com.android.build.gradle.internal.tasks.R8Task>().configureEach {
+                enabled = true
+            }
+        }
+        debug {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -73,6 +85,7 @@ dependencies {
     implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.glance.appwidget)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -116,4 +129,16 @@ dependencies {
     implementation (libs.accompanist.pager.indicators)
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.swiperefresh)
+    implementation (libs.accompanist.permissions)
+    implementation(libs.play.services.location)
+
+    // Google Play Services Maps SDK
+    implementation (libs.play.services.maps)
+
+    // Maps Compose Library (optional if you are using Compose with Maps)
+    implementation (libs.maps.compose)
+
+
+    // Splash API
+    implementation(libs.androidx.core.splashscreen)
 }

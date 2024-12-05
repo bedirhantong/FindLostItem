@@ -2,6 +2,7 @@ package com.ribuufing.findlostitem.di
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.ribuufing.findlostitem.data.datasources.FirestoreDataSource
 import dagger.Module
 import dagger.Provides
@@ -15,21 +16,20 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideFirestoreInstance(): FirebaseFirestore {
-        return FirebaseFirestore.getInstance() // Firebase'i burada başlatmıyorsunuz
-    }
+    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
 
     @Provides
     @Singleton
-    fun provideFirestoreDataSource(firestore: FirebaseFirestore): FirestoreDataSource {
-        return FirestoreDataSource(firestore)
-    }
+    fun provideFirebaseStorage(): FirebaseStorage = FirebaseStorage.getInstance()
 
     @Provides
     @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth {
-        return FirebaseAuth.getInstance()
-    }
+    fun provideFirebaseFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
 
-
+    @Provides
+    @Singleton
+    fun provideFirestoreDataSource(
+        firestore: FirebaseFirestore,
+        storage: FirebaseStorage
+    ): FirestoreDataSource = FirestoreDataSource(firestore = firestore, storage = storage)
 }
