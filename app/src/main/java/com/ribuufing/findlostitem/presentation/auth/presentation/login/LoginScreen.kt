@@ -119,7 +119,6 @@ fun LoginScreen(
                 }
             }
 
-            // Mesaj
             Text(
                 text = "You will never try to find your lost item alone.",
                 fontSize = 16.sp,
@@ -128,7 +127,6 @@ fun LoginScreen(
                 modifier = Modifier.padding(16.dp)
             )
 
-            // Email Input
             OutlinedTextField(
                 value = email,
                 maxLines = 1,
@@ -149,7 +147,6 @@ fun LoginScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
-            // Password Input
             OutlinedTextField(
                 value = password,
                 maxLines = 1,
@@ -186,7 +183,6 @@ fun LoginScreen(
                 }
             )
 
-            // Forgot Password
             Text(
                 text = "Forgot password?",
                 color = Color(0xFF99704D),
