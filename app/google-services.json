@@ -1,1 +1,29 @@
-
+{
+  "project_info": {
+    "project_number": "423224994753",
+    "project_id": "find-lost-item-7d571",
+    "storage_bucket": "find-lost-item-7d571.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423224994753:android:b27d848506c334f8871d40",
+        "android_client_info": {
+          "package_name": "com.ribuufing.findlostitem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEKLNjKwcwoHDvYUi-6VI7ybrSCxAEY_Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
