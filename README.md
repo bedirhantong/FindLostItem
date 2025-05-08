@@ -119,3 +119,15 @@
   - Navigation component rules
   - Model class preservation
 </details>
+
+## Firebase Configuration
+
+To run this project, you need to set up Firebase in your development environment:
+
+1. Create a new Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Add an Android app to your Firebase project
+3. Download the `google-services.json` file
+4. Place the `google-services.json` file in the `app/` directory
+5. Copy `google-services.example.json` to `google-services.json` and update with your Firebase credentials
+
+**Important:** Never commit your actual `google-services.json` file to version control. It contains sensitive information that should be kept private.

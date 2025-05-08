@@ -19,6 +19,7 @@ import com.ribuufing.findlostitem.presentation.auth.presentation.signup.Register
 import com.ribuufing.findlostitem.presentation.directmessages.DmChatScreen
 import com.ribuufing.findlostitem.presentation.lostitemdetail.LostItemDetailScreen
 import com.ribuufing.findlostitem.presentation.mapscreen.MapScreen
+import com.ribuufing.findlostitem.presentation.paywall.PaywallScreen
 import com.ribuufing.findlostitem.presentation.profile.presentation.ProfileScreen
 import com.ribuufing.findlostitem.presentation.profile.presentation.settings.SettingsScreen
 import com.ribuufing.findlostitem.presentation.reportfounditem.ReportFoundItemScreen
@@ -60,6 +61,10 @@ fun NavigationGraph(
             onBottomBarVisibility(true)
             ProfileScreen(navController = navController)
         }
+        composable(Routes.Paywall.route) {
+            PaywallScreen(navController = navController)
+        }
+
         composable(
             route = "${Routes.Chat.route}/{itemId}/{senderUid}/{receiverUid}",
             arguments = listOf(
