@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="arts/find_lost_items.png" alt="App Logo" width="1200"/>
+  <img src="arts/sunu.png" alt="App Logo" width="1200"/>
   <h1>Lost & Found Items University App</h1>
   <p>
     <strong>Find Lost Items aims to help students and staff at the university easily report, find, and communicate about lost and found items.
