@@ -47,7 +47,7 @@
 
 | splash | login | signup |
 |:-:|:-:|:-:|
-| <img src="arts/splash.png" alt="drawing" width="250"/> | <img src="arts/login.png" alt="drawing" width="250"/> | <img src="arts/signup.png" alt="drawing" width="250"/> |
+| <img src="arts/splash.png" alt="drawing" width="250"/> | <img src="arts/login.png" alt="drawing" width="250"/> | <img src="arts/paywall.png" alt="drawing" width="250"/> |
 | home | search | post |
 | <img src="arts/home.png" alt="drawing" width="250"/> | <img src="arts/search.png" alt="drawing" width="250"/> | <img src="arts/new_post.png" alt="drawing" width="250"/> 
 | map | profile | movie detail |
