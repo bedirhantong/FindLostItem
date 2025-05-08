@@ -1,24 +1,40 @@
+# Firebase
+google-services.json
+**/google-services.json
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+
+# Local configuration file (sdk path, etc)
 local.properties
 
-# Tüm IDEA ayarlarını dışla
-.idea/
+# Gradle files
+.gradle/
+build/
 
-# Ama şu dosyaları dahil et
-!.idea/misc.xml
-!.idea/modules.xml
-!.idea/vcs.xml
-!.idea/gradle.xml
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
+
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Keystore files
+*.jks
+*.keystore
+
+# Android Profiling
+*.hprof
+
+# Environment Variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production

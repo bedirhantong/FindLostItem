@@ -77,7 +77,6 @@ fun WelcomeScreen(navController: NavHostController) {
             onboardingPages = pages
             isLoading = false
         } catch (e: Exception) {
-            // Hata durumunda varsayılan sayfaları göster
             isLoading = false
         }
     }
@@ -176,7 +175,7 @@ fun WelcomeScreen(navController: NavHostController) {
                                 pagerState.animateScrollToPage(pagerState.currentPage + 1)
                             }
                         } else {
-                            navController.navigate(Routes.Login.route) {
+                            navController.navigate(Routes.Paywall.route) {
                                 popUpTo(Routes.Welcome.route) { inclusive = true }
                             }
                         }

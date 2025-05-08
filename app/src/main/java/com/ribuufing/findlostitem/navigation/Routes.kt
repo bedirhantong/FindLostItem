@@ -7,5 +7,6 @@ sealed class Routes(val route: String) {
     object Signup : Routes("signup")
     object Login : Routes("login")
     object Settings : Routes("settings")
+    object Paywall : Routes("paywall")
     object ItemDetail : Routes("item_detail/{itemId}")
 }
